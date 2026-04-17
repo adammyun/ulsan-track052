@@ -2,104 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* Track 052 — Editorial design system */
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+  :root,
+  .day {
+    --paper: 45 30% 97%;
+    --ink: 40 8% 10%;
+    --ink-mid: 40 6% 28%;
+    --ink-light: 40 5% 60%;
+    --ink-faint: 40 10% 90%;
+    --card-bg: 42 18% 93%;
+    --guide-bg: 40 8% 8%;
+    --hero-from: 35 12% 11%;
+    --hero-to: 30 18% 5%;
+    --accent: 13 55% 51%;
+    --accent-soft: 18 50% 94%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--card-bg);
+    --card-foreground: var(--ink);
+    --popover: var(--paper);
+    --popover-foreground: var(--ink);
+    --primary: var(--ink);
+    --primary-foreground: var(--paper);
+    --secondary: var(--card-bg);
+    --secondary-foreground: var(--ink);
+    --muted: var(--ink-faint);
+    --muted-foreground: var(--ink-light);
+    --accent-foreground: var(--paper);
+    --destructive: 0 84% 60%;
+    --destructive-foreground: var(--paper);
+    --border: var(--ink-faint);
+    --input: var(--ink-faint);
+    --ring: var(--accent);
+    --radius: 0.125rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
+  .night {
+    --paper: 215 30% 5%;
+    --ink: 35 18% 86%;
+    --ink-mid: 35 8% 60%;
+    --ink-light: 35 6% 30%;
+    --ink-faint: 215 18% 12%;
+    --card-bg: 215 22% 8%;
+    --guide-bg: 220 30% 3%;
+    --hero-from: 220 22% 6%;
+    --hero-to: 220 30% 2%;
+    --accent: 207 38% 64%;
+    --accent-soft: 215 28% 11%;
   }
 
+  * { @apply border-border; }
+  html { scroll-behavior: smooth; }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Noto Sans KR', system-ui, sans-serif;
+    font-weight: 300;
+    transition: background 900ms ease, color 600ms ease;
+    overflow-x: hidden;
   }
+  .font-serif-kr { font-family: 'Noto Serif KR', 'Cormorant Garamond', serif; }
+  .font-display { font-family: 'DM Serif Display', 'Cormorant Garamond', serif; }
+  .font-sans-kr { font-family: 'Noto Sans KR', system-ui, sans-serif; }
+}
+
+@layer utilities {
+  .grain {
+    position: relative;
+  }
+  .grain::after {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none; opacity: .045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 120px;
+  }
+  .text-ink { color: hsl(var(--ink)); }
+  .text-ink-mid { color: hsl(var(--ink-mid)); }
+  .text-ink-light { color: hsl(var(--ink-light)); }
+  .bg-paper { background: hsl(var(--paper)); }
+  .bg-card-bg { background: hsl(var(--card-bg)); }
+  .bg-guide { background: hsl(var(--guide-bg)); }
+  .border-faint { border-color: hsl(var(--ink-faint)); }
+  .text-accent-c { color: hsl(var(--accent)); }
+  .bg-accent-c { background: hsl(var(--accent)); }
+  .bg-accent-soft { background: hsl(var(--accent-soft)); }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .9s ease, transform .9s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @keyframes fade-up { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes loadbar { from { width: 0 } to { width: 100% } }
+  @keyframes drop-line { to { top: 100% } }
+  .animate-fade-up { animation: fade-up .9s ease forwards; }
+
+  @keyframes slide-in-r { from { opacity: 0; transform: translateX(40px) } to { opacity: 1; transform: translateX(0) } }
+  @keyframes slide-in-l { from { opacity: 0; transform: translateX(-40px) } to { opacity: 1; transform: translateX(0) } }
+  .animate-slide-in-r { animation: slide-in-r .35s cubic-bezier(.22,1,.36,1) forwards; }
+  .animate-slide-in-l { animation: slide-in-l .35s cubic-bezier(.22,1,.36,1) forwards; }
 }
