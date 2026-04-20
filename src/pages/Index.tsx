@@ -274,13 +274,26 @@ export default function Index() {
           {/* 중앙 — 선택된 개념이 Track:052 자리를 완전히 대체 */}
           <div className="flex items-baseline flex-shrink-0">
             <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">[</span>
-            <span
-              key={concept}
-              className="font-serif-kr text-4xl md:text-6xl lg:text-7xl text-accent-c leading-none -tracking-[0.02em] px-3 md:px-5 inline-block"
+            <button
+              key={concept === "track" ? `track-${trackPick}` : concept}
+              onClick={() => {
+                if (concept === "track") {
+                  // 다른 픽으로 변경
+                  const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
+                  const next = arr.filter((p) => p !== trackPick);
+                  setTrackPick(next[Math.floor(Math.random() * next.length)]);
+                }
+              }}
+              className={`font-serif-kr text-accent-c leading-none -tracking-[0.02em] px-3 md:px-5 inline-block transition-all ${
+                concept === "track"
+                  ? "text-3xl md:text-5xl lg:text-6xl"
+                  : "text-4xl md:text-6xl lg:text-7xl"
+              }`}
               style={{ animation: "fade-up .55s ease forwards" }}
+              aria-label="Selected concept"
             >
               {CONCEPT_LABEL[cycle.center]}
-            </span>
+            </button>
             <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">]</span>
           </div>
 
