@@ -65,14 +65,14 @@ const JUNGGU: ArchItem[] = [
   { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true },
 ];
 
-// 무드보드 — 가이드 파일명 사용. day/night 페어로 분위기 변화.
+// 무드보드 — 가이드 파일명 사용. 야경 컷(jangseongpo, samsan)은 자체로 밤, 그 외는 day 이미지 공유.
 const MOOD: { day: string; night: string; label: string; ratio: string }[] = [
-  { day: "mood-taehwa-autumn",    night: "arch-taehwa-reeds-night",    label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
-  { day: "mood-seongnam-spring",  night: "arch-seongnam-flower-night", label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
-  { day: "mood-seonam-dawn",      night: "arch-seonam-shortcut-night", label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
-  { day: "mood-jangseongpo-night",night: "mood-jangseongpo-night",     label: "장생포 야경",         ratio: "aspect-[3/4]" },
-  { day: "mood-hakseong-winter",  night: "arch-hakseong-trail-night",  label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
-  { day: "mood-samsan-evening",   night: "mood-samsan-evening",        label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
+  { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
+  { day: "mood-seongnam-spring",   night: "mood-seongnam-spring",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
+  { day: "mood-seonam-dawn",       night: "mood-seonam-dawn",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
+  { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night", label: "장생포 야경",         ratio: "aspect-[3/4]" },
+  { day: "mood-hakseong-winter",   night: "mood-hakseong-winter",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
+  { day: "mood-samsan-evening",    night: "mood-samsan-evening",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
 ];
 
 // 가이드 — 4페이지의 챕터식 페이지 넘김
