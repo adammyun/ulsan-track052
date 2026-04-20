@@ -65,14 +65,14 @@ const JUNGGU: ArchItem[] = [
   { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true },
 ];
 
-// 무드보드 — 가이드 파일명 사용. day/night 페어로 분위기 변화.
+// 무드보드 — 가이드 파일명 사용. 야경 컷(jangseongpo, samsan)은 자체로 밤, 그 외는 day 이미지 공유.
 const MOOD: { day: string; night: string; label: string; ratio: string }[] = [
-  { day: "mood-taehwa-autumn",    night: "arch-taehwa-reeds-night",    label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
-  { day: "mood-seongnam-spring",  night: "arch-seongnam-flower-night", label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
-  { day: "mood-seonam-dawn",      night: "arch-seonam-shortcut-night", label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
-  { day: "mood-jangseongpo-night",night: "mood-jangseongpo-night",     label: "장생포 야경",         ratio: "aspect-[3/4]" },
-  { day: "mood-hakseong-winter",  night: "arch-hakseong-trail-night",  label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
-  { day: "mood-samsan-evening",   night: "mood-samsan-evening",        label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
+  { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
+  { day: "mood-seongnam-spring",   night: "mood-seongnam-spring",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
+  { day: "mood-seonam-dawn",       night: "mood-seonam-dawn",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
+  { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night", label: "장생포 야경",         ratio: "aspect-[3/4]" },
+  { day: "mood-hakseong-winter",   night: "mood-hakseong-winter",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
+  { day: "mood-samsan-evening",    night: "mood-samsan-evening",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
 ];
 
 // 가이드 — 4페이지의 챕터식 페이지 넘김
@@ -168,6 +168,12 @@ export default function Index() {
     document.documentElement.classList.toggle("day", !isNight);
   }, [isNight]);
 
+  // 가이드 자동 페이지 넘김 — 8초마다, 마지막 → 처음 순환
+  useEffect(() => {
+    const t = setInterval(() => setGuidePage((p) => (p + 1) % 5), 8000);
+    return () => clearInterval(t);
+  }, []);
+
   useEffect(() => {
     observerRef.current?.disconnect();
     const io = new IntersectionObserver((entries) => {
@@ -220,11 +226,14 @@ export default function Index() {
         <img src="/images/hero-nature-night.jpg" alt=""
           onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-night.jpg"; }}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-100" : "opacity-0"}`} />
-        {/* 어둡게 깔리는 그라디언트 */}
-        <div className={`absolute inset-0 transition-colors duration-1000 ${isNight ? "bg-black/55" : "bg-black/35"}`}
+        {/* 더 어둡게 깔리는 그라디언트 — 텍스트 가독성 강화, 자연 분위기 유지 */}
+        <div className="absolute inset-0 transition-colors duration-1000"
           style={{ background: isNight
-            ? "linear-gradient(180deg, rgba(5,8,16,0.55) 0%, rgba(5,8,16,0.35) 50%, rgba(5,8,16,0.7) 100%)"
-            : "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.55) 100%)" }} />
+            ? "linear-gradient(180deg, rgba(3,5,12,0.78) 0%, rgba(3,5,12,0.6) 45%, rgba(3,5,12,0.88) 100%)"
+            : "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.78) 100%)" }} />
+        {/* 중앙 비네트 — 텍스트 뒤를 한번 더 가라앉힘 */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 65%)" }} />
 
         {/* 별 (밤에만) */}
         <svg className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
@@ -237,37 +246,34 @@ export default function Index() {
           </g>
         </svg>
 
-        {/* [Track : 052] + 양 옆 순환 토글 */}
+        {/* 선택한 개념이 [Track:052] 자리를 완전히 대체 */}
         <div className="relative z-10 flex items-center justify-center gap-6 md:gap-10 w-full max-w-6xl animate-fade-up">
           {/* 왼쪽 */}
           <button
             onClick={() => setConcept(cycle.left)}
-            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/55 transition-all duration-500"
-            style={{ transform: "translateX(0)" }}
+            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/60 transition-all duration-500"
             aria-label={`Select ${cycle.left}`}
           >
             {CONCEPT_LABEL[cycle.left]}
           </button>
 
-          {/* 중앙 */}
+          {/* 중앙 — 선택된 개념이 Track:052 자리를 완전히 대체 */}
           <div className="flex items-baseline flex-shrink-0">
-            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white/90 leading-none -tracking-[0.02em]">[</span>
-            <span className="font-display text-3xl md:text-5xl lg:text-6xl text-white/70 leading-none -tracking-[0.02em] px-2 md:px-3 italic">
-              Track : 052
-            </span>
-            <span className="font-display text-3xl md:text-5xl lg:text-6xl text-accent-c leading-none -tracking-[0.02em] px-1 md:px-2 font-serif-kr not-italic transition-all duration-500"
+            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">[</span>
+            <span
               key={concept}
-              style={{ animation: "fade-up .6s ease forwards" }}
+              className="font-serif-kr text-4xl md:text-6xl lg:text-7xl text-accent-c leading-none -tracking-[0.02em] px-3 md:px-5 inline-block"
+              style={{ animation: "fade-up .55s ease forwards" }}
             >
               {CONCEPT_LABEL[cycle.center]}
             </span>
-            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white/90 leading-none -tracking-[0.02em]">]</span>
+            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">]</span>
           </div>
 
           {/* 오른쪽 */}
           <button
             onClick={() => setConcept(cycle.right)}
-            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/55 transition-all duration-500"
+            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/60 transition-all duration-500"
             aria-label={`Select ${cycle.right}`}
           >
             {CONCEPT_LABEL[cycle.right]}
