@@ -1,27 +1,32 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type Concept = "default" | "gatgil" | "saetgil" | "jireum";
+type Concept = "gatgil" | "saetgil" | "jireum";
 
-const CONCEPT_DESC: Record<Concept, string> = {
-  default: "갓길 · 샛길 · 지름길 — 원하는 길을 선택하세요",
-  gatgil: "GATGIL — 잠시 쉬어가는 길",
-  saetgil: "SAETGIL — 아무도 모르는 예쁜 길",
-  jireum: "JIREUM — 현지인만 아는 빠른 길",
-};
-const CONCEPT_TAG: Record<Concept, string> = {
-  default: "전체 보기",
+const CONCEPT_LABEL: Record<Concept, string> = {
   gatgil: "갓길",
   saetgil: "샛길",
   jireum: "지름길",
 };
+const CONCEPT_DESC: Record<Concept, string> = {
+  gatgil: "GATGIL — 잠시 쉬어가는 길",
+  saetgil: "SAETGIL — 아무도 모르는 예쁜 길",
+  jireum: "JIREUM — 현지인만 아는 빠른 길",
+};
 
-const PICKS = {
-  default: {
-    img: "pick-taehwa", type: "이번 주 울산의 추천길",
-    title: ["태화강 둔치,", "봄볕 속의 산책"], loc: "울산 중구 태화동 · 태화강 국가정원",
-    essay: ["계절이 바뀌면 강도 바뀐다.", "봄의 태화강 둔치는 억새 대신 유채꽃이 피어", "노랗게 물드는 계절이다. 아무 생각 없이", "걷기에 이보다 좋은 길은 없다."],
-    badges: ["도보 20분", "쉬움", "연중", "반려동물 가능"],
-  },
+// 순환 순서: 선택한 요소 기준으로 [left, center(selected), right]
+const CYCLE: Concept[] = ["gatgil", "saetgil", "jireum"];
+const cycleAround = (c: Concept) => {
+  const i = CYCLE.indexOf(c);
+  return {
+    left: CYCLE[(i + 2) % 3],
+    center: c,
+    right: CYCLE[(i + 1) % 3],
+  };
+};
+
+const PICKS: Record<Concept, {
+  img: string; type: string; title: string[]; loc: string; essay: string[]; badges: string[];
+}> = {
   gatgil: {
     img: "pick-seonam", type: "갓길 — 잠시 쉬어가는 길",
     title: ["선암호수 벤치,", "아무것도 안 해도 되는 곳"], loc: "울산 남구 선암동 · 선암호수공원",
@@ -40,7 +45,7 @@ const PICKS = {
     essay: ["정식 등산로를 따라가면 돌아가는 길,", "공원 북쪽 담장을 따라 걸으면", "30분이 절약된다. 게다가 중간에 나오는", "전망 포인트는 정식 코스에는 없다."],
     badges: ["도보 25분", "보통", "아침 추천", "뷰포인트"],
   },
-} as const;
+};
 
 type ArchItem = { img: string; type: string; name: string; meta: string; tags: string; extra?: boolean };
 const NAMGU: ArchItem[] = [
@@ -60,63 +65,95 @@ const JUNGGU: ArchItem[] = [
   { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true },
 ];
 
-// 무드보드: day/night 페어. (mood-* 파일은 미생성이라 pick/arch 이미지로 매핑)
+// 무드보드 — 가이드 파일명 사용. day/night 페어로 분위기 변화.
 const MOOD: { day: string; night: string; label: string; ratio: string }[] = [
-  { day: "arch-taehwa-reeds",     night: "pick-taehwa-night",  label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
-  { day: "arch-seongnam-flower",  night: "pick-seongnam-night", label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
-  { day: "pick-seonam-day",       night: "pick-seonam-night",  label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
-  { day: "arch-jangseongpo",      night: "pick-seongnam-night", label: "장생포 야경",         ratio: "aspect-[3/4]" },
-  { day: "arch-hakseong-trail",   night: "pick-hakseong-night", label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
-  { day: "arch-samsan-alley",     night: "pick-seongnam-night", label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
+  { day: "mood-taehwa-autumn",    night: "arch-taehwa-reeds-night",    label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
+  { day: "mood-seongnam-spring",  night: "arch-seongnam-flower-night", label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
+  { day: "mood-seonam-dawn",      night: "arch-seonam-shortcut-night", label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
+  { day: "mood-jangseongpo-night",night: "mood-jangseongpo-night",     label: "장생포 야경",         ratio: "aspect-[3/4]" },
+  { day: "mood-hakseong-winter",  night: "arch-hakseong-trail-night",  label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
+  { day: "mood-samsan-evening",   night: "mood-samsan-evening",        label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
 ];
 
+// 가이드 — 4페이지의 챕터식 페이지 넘김
+const GUIDE_INTRO = {
+  title: "인생이라는 큰 길에서 잠시 벗어나",
+  subtitle: "쉬어갈 수 있는 작은 길들을 소개합니다",
+  body:
+    "Track 052는 울산이라는 도시의 옆길과 뒷길, 그리고 지름길을 천천히 걷고 기록하는 작은 아카이브입니다. " +
+    "정해진 목적지 대신, 길 그 자체가 목적인 산책. 오늘의 마음에 어울리는 길을 골라 잠시 천천히 걸어보세요.",
+};
 const GUIDE = [
-  { n: "01", t: "길의 종류를 골라요", d: "쉬고 싶은 날엔 갓길, 새로운 것을 발견하고 싶은 날엔 샛길, 효율적으로 움직이고 싶은 날엔 지름길. 오늘의 기분이 길을 결정합니다." },
-  { n: "02", t: "낮과 밤을 다르게 봐요", d: "태화강 둔치는 낮에는 억새밭이, 밤에는 십리대숲 불빛이 전혀 다른 표정을 만듭니다. 같은 길도 시간이 달라지면 새로운 곳이 돼요." },
-  { n: "03", t: "목적지를 버려요", d: "Track 052가 소개하는 길에는 출발지와 방향만 있습니다. 어디까지 가야 한다는 부담 없이, 마음이 멈추는 곳에서 멈추세요." },
-  { n: "04", t: "기록을 남겨요", d: "오늘 발견한 작은 것들을 사진으로 남겨주세요. #Track052 태그와 함께라면 당신의 길이 다른 누군가의 오늘 코스가 됩니다." },
+  {
+    n: "01", t: "길의 종류를 골라요",
+    d: "쉬고 싶은 날엔 갓길, 새로운 것을 발견하고 싶은 날엔 샛길, 효율적으로 움직이고 싶은 날엔 지름길. 오늘의 기분이 길을 결정합니다.",
+    extra: "세 갈래의 길은 모두 같은 도시 안에 있습니다. 다만 어떤 길을 고르느냐에 따라 도시가 보여주는 표정이 달라질 뿐. 매일 다른 길을 골라보는 것만으로도 익숙한 동네가 새롭게 보이기 시작해요.",
+  },
+  {
+    n: "02", t: "낮과 밤을 다르게 봐요",
+    d: "태화강 둔치는 낮에는 억새밭이, 밤에는 십리대숲 불빛이 전혀 다른 표정을 만듭니다. 같은 길도 시간이 달라지면 새로운 곳이 돼요.",
+    extra: "오른쪽 위의 낮/밤 토글을 눌러보세요. 한 장의 사진이 천천히 다른 시간대로 바뀌며, 길이 가진 또 다른 얼굴을 보여줍니다. 같은 자리에서, 다른 시간을.",
+  },
+  {
+    n: "03", t: "목적지를 버려요",
+    d: "Track 052가 소개하는 길에는 출발지와 방향만 있습니다. 어디까지 가야 한다는 부담 없이, 마음이 멈추는 곳에서 멈추세요.",
+    extra: "산책의 본질은 ‘도착’이 아니라 ‘걷는 동안’에 있습니다. 중간에 마음에 드는 벤치가 있다면 앉으세요. 골목이 예쁘면 잠시 사진도 찍어요. 길을 잃어도 괜찮은 코스만 골라 두었습니다.",
+  },
+  {
+    n: "04", t: "기록을 남겨요",
+    d: "오늘 발견한 작은 것들을 사진으로 남겨주세요. #Track052 태그와 함께라면 당신의 길이 다른 누군가의 오늘 코스가 됩니다.",
+    extra: "이 사이트의 무드보드는 모두 독자분들이 #Track052 로 공유해주신 길에서 시작되었어요. 거창한 풍경이 아니어도 좋습니다. 오늘의 그 길, 오늘의 그 빛을 기록해 주세요.",
+  },
 ];
 
-// Day/Night 이미지 컴포넌트 — 두 이미지를 겹쳐 두고 opacity로 크로스페이드
+// ── 이미지 컴포넌트 ───────────────────────────────────────────────
 function DayNightImg({ base, alt, isNight, className = "" }: { base: string; alt: string; isNight: boolean; className?: string }) {
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
       <img src={`/images/${base}-day.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
       <img src={`/images/${base}-night.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
     </div>
   );
 }
 
-// 단일 이미지 (낮/밤 페어가 없는 경우)
-function SoloImg({ src, alt }: { src: string; alt: string }) {
+// 아카이브 카드: -night.jpg 가 있으면 크로스페이드, 없으면 day만
+function ArchImg({ base, alt, isNight }: { base: string; alt: string; isNight: boolean }) {
   return (
-    <img src={`/images/${src}.jpg`} alt={alt}
-      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
+      <img src={`/images/${base}.jpg`} alt={alt}
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+      <img src={`/images/${base}-night.jpg`} alt={alt}
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+    </div>
   );
 }
 
-// Mood image — day/night 다른 이미지를 크로스페이드
 function MoodImg({ day, night, alt, isNight }: { day: string; night: string; alt: string; isNight: boolean }) {
   return (
     <>
       <img src={`/images/${day}.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/images/${night}.jpg`; }}
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
       <img src={`/images/${night}.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        onError={(e) => { (e.currentTarget as HTMLImageElement).src = `/images/${day}.jpg`; }}
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
     </>
   );
 }
 
+// ── 메인 ──────────────────────────────────────────────────────────
 export default function Index() {
   const [intro, setIntro] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [isNight, setIsNight] = useState(false);
-  const [concept, setConcept] = useState<Concept>("default");
+  const [concept, setConcept] = useState<Concept>("gatgil");
   const [filter, setFilter] = useState<"all" | "namgu" | "junggu">("all");
   const [moreNamgu, setMoreNamgu] = useState(false);
   const [moreJunggu, setMoreJunggu] = useState(false);
+  const [guidePage, setGuidePage] = useState(0); // 0 = intro, 1..4 = chapters
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -131,7 +168,6 @@ export default function Index() {
     document.documentElement.classList.toggle("day", !isNight);
   }, [isNight]);
 
-  // reveal-on-scroll
   useEffect(() => {
     observerRef.current?.disconnect();
     const io = new IntersectionObserver((entries) => {
@@ -140,19 +176,20 @@ export default function Index() {
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
     observerRef.current = io;
     return () => io.disconnect();
-  }, [concept, filter, moreNamgu, moreJunggu, intro]);
+  }, [concept, filter, moreNamgu, moreJunggu, guidePage, intro]);
 
   const pick = PICKS[concept];
   const namguList = moreNamgu ? NAMGU : NAMGU.filter((i) => !i.extra);
   const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
   const showJunggu = filter !== "namgu";
+  const cycle = useMemo(() => cycleAround(concept), [concept]);
 
   return (
     <main className="bg-paper text-ink min-h-screen">
       {/* Intro */}
       <div className={`fixed inset-0 z-[9000] bg-paper flex flex-col items-center justify-center gap-5 transition-opacity duration-700 ${intro ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-        <p className="text-[11px] tracking-[0.4em] text-ink-light animate-fade-up">TRACK 052</p>
+        <p className="text-[11px] tracking-[0.4em] text-ink-light animate-fade-up">TRACK : 052</p>
         <div className="w-11 h-px bg-[hsl(var(--ink-faint))] overflow-hidden">
           <div className="h-full bg-accent-c" style={{ animation: "loadbar 2.2s ease forwards" }} />
         </div>
@@ -161,7 +198,7 @@ export default function Index() {
 
       {/* Nav */}
       <nav className={`fixed top-0 inset-x-0 z-50 flex items-center justify-between transition-all duration-300 ${scrolled ? "py-3 px-6 md:px-14 bg-paper/95 backdrop-blur-md border-b border-faint" : "py-5 px-6 md:px-14"}`}>
-        <a href="#" className={`text-[11px] tracking-[0.3em] transition-colors ${scrolled ? "text-ink-light" : "text-white/60"}`}>TRACK 052</a>
+        <a href="#" className={`text-[11px] tracking-[0.3em] transition-colors ${scrolled ? "text-ink-light" : "text-white/60"}`}>TRACK : 052</a>
         <ul className="hidden md:flex gap-8 list-none">
           {[["#pick", "에디터 픽"], ["#archive", "아카이브"], ["#guide", "가이드"], ["#moodboard", "포토"]].map(([h, l]) => (
             <li key={h}><a href={h} className={`text-[10px] tracking-[0.16em] transition-colors hover:text-accent-c ${scrolled ? "text-ink-light" : "text-white/55"}`}>{l}</a></li>
@@ -174,53 +211,83 @@ export default function Index() {
         </button>
       </nav>
 
-      {/* Hero */}
-      <section id="hero" className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden"
-        style={{ background: "linear-gradient(160deg, hsl(var(--hero-from)), hsl(var(--hero-to)))" }}>
+      {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
+      <section id="hero" className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
+        {/* 자연 배경 (낮/밤) */}
+        <img src="/images/hero-nature-day.jpg" alt=""
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-day.jpg"; }}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-0" : "opacity-100"}`} />
+        <img src="/images/hero-nature-night.jpg" alt=""
+          onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-night.jpg"; }}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-100" : "opacity-0"}`} />
+        {/* 어둡게 깔리는 그라디언트 */}
+        <div className={`absolute inset-0 transition-colors duration-1000 ${isNight ? "bg-black/55" : "bg-black/35"}`}
+          style={{ background: isNight
+            ? "linear-gradient(180deg, rgba(5,8,16,0.55) 0%, rgba(5,8,16,0.35) 50%, rgba(5,8,16,0.7) 100%)"
+            : "linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 45%, rgba(0,0,0,0.55) 100%)" }} />
+
+        {/* 별 (밤에만) */}
         <svg className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
           <g fill="#fff">
-            {[[110,72,.8,.55],[290,130,1,.75],[460,55,.6,.5],[620,105,.9,.65],[780,40,.7,.55],[920,125,1.1,.85],[1060,65,.8,.6],[540,165,.9,.55],[690,225,.8,.55]].map((s,i)=>(
-              <circle key={i} cx={s[0]} cy={s[1]} r={s[2]} opacity={s[3]} />
+            {[[110,72,.8,.55],[290,130,1,.75],[460,55,.6,.5],[620,105,.9,.65],[780,40,.7,.55],[920,125,1.1,.85],[1060,65,.8,.6],[540,165,.9,.55],[690,225,.8,.55],[200,260,.7,.5],[1200,220,.9,.7],[1340,90,.6,.45],[850,260,.7,.5]].map((s,i)=>(
+              <circle key={i} cx={s[0]} cy={s[1]} r={s[2]} opacity={s[3] as number}>
+                <animate attributeName="opacity" values={`${(s[3] as number)*0.4};${s[3]};${(s[3] as number)*0.4}`} dur={`${2+i*0.3}s`} repeatCount="indefinite" />
+              </circle>
             ))}
           </g>
         </svg>
-        <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-0 w-full max-w-5xl animate-fade-up">
-          <div className="flex md:flex-col gap-5 md:gap-3.5 md:items-end md:pr-9">
-            {(["gatgil","saetgil"] as const).map((c)=>(
-              <button key={c} onClick={()=>setConcept(c)}
-                className={`relative font-serif-kr text-base md:text-2xl whitespace-nowrap pb-0.5 transition-colors ${concept===c?"text-white/70":"text-white/15 hover:text-white/40"}`}>
-                {c==="gatgil"?"갓길":"샛길"}
-                <span className={`absolute left-0 right-0 bottom-0 h-px bg-accent-c origin-right transition-transform duration-300 ${concept===c?"scale-x-100":"scale-x-0"}`}/>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center flex-shrink-0">
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em]">[</span>
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] px-3 min-w-[2.8ch] text-center">
-              Track 052
+
+        {/* [Track : 052] + 양 옆 순환 토글 */}
+        <div className="relative z-10 flex items-center justify-center gap-6 md:gap-10 w-full max-w-6xl animate-fade-up">
+          {/* 왼쪽 */}
+          <button
+            onClick={() => setConcept(cycle.left)}
+            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/55 transition-all duration-500"
+            style={{ transform: "translateX(0)" }}
+            aria-label={`Select ${cycle.left}`}
+          >
+            {CONCEPT_LABEL[cycle.left]}
+          </button>
+
+          {/* 중앙 */}
+          <div className="flex items-baseline flex-shrink-0">
+            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white/90 leading-none -tracking-[0.02em]">[</span>
+            <span className="font-display text-3xl md:text-5xl lg:text-6xl text-white/70 leading-none -tracking-[0.02em] px-2 md:px-3 italic">
+              Track : 052
             </span>
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em]">]</span>
+            <span className="font-display text-3xl md:text-5xl lg:text-6xl text-accent-c leading-none -tracking-[0.02em] px-1 md:px-2 font-serif-kr not-italic transition-all duration-500"
+              key={concept}
+              style={{ animation: "fade-up .6s ease forwards" }}
+            >
+              {CONCEPT_LABEL[cycle.center]}
+            </span>
+            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white/90 leading-none -tracking-[0.02em]">]</span>
           </div>
-          <div className="flex md:flex-col md:items-start md:pl-9">
-            <button onClick={()=>setConcept("jireum")}
-              className={`relative font-serif-kr text-base md:text-2xl whitespace-nowrap pb-0.5 transition-colors ${concept==="jireum"?"text-white/70":"text-white/15 hover:text-white/40"}`}>
-              지름길
-              <span className={`absolute left-0 right-0 bottom-0 h-px bg-accent-c origin-left transition-transform duration-300 ${concept==="jireum"?"scale-x-100":"scale-x-0"}`}/>
-            </button>
-          </div>
+
+          {/* 오른쪽 */}
+          <button
+            onClick={() => setConcept(cycle.right)}
+            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/55 transition-all duration-500"
+            aria-label={`Select ${cycle.right}`}
+          >
+            {CONCEPT_LABEL[cycle.right]}
+          </button>
         </div>
-        <div className="relative z-10 mt-7 animate-fade-up">
+
+        <div className="relative z-10 mt-8 animate-fade-up">
           <p className="text-[9px] tracking-[0.32em] text-accent-c mb-2.5">ULSAN HIDDEN TRACK</p>
-          <p className="font-serif-kr italic text-sm text-white/35 tracking-wide">울산의 길목에서, 오늘의 길을 찾습니다</p>
+          <p className="font-serif-kr italic text-sm md:text-base text-white/60 tracking-wide">울산의 길목에서, 오늘의 길을 찾습니다</p>
         </div>
         <div className="relative z-10 mt-5 min-h-[22px] animate-fade-up">
-          <span className="text-[9px] tracking-[0.22em] text-white/30 px-3.5 py-1 border border-white/10 rounded-full">{CONCEPT_DESC[concept]}</span>
+          <span className="text-[9px] tracking-[0.22em] text-white/55 px-3.5 py-1 border border-white/15 rounded-full backdrop-blur-sm">
+            {CONCEPT_DESC[concept]}
+          </span>
         </div>
         <div className="absolute bottom-11 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 z-10 animate-fade-up">
-          <div className="w-px h-9 bg-white/20 relative overflow-hidden">
+          <div className="w-px h-9 bg-white/25 relative overflow-hidden">
             <span className="absolute -top-full left-0 w-full h-full bg-accent-c" style={{ animation: "drop-line 2s 1.8s infinite ease" }} />
           </div>
-          <p className="text-[8px] tracking-[0.3em] text-white/25">SCROLL</p>
+          <p className="text-[8px] tracking-[0.3em] text-white/40">SCROLL</p>
         </div>
       </section>
 
@@ -230,7 +297,7 @@ export default function Index() {
           <p className="reveal text-[9px] tracking-[0.3em] text-ink-light flex items-center gap-3.5">
             EDITOR'S PICK<span className="block w-7 h-px bg-accent-c" />
           </p>
-          <span className="text-[9px] tracking-[0.18em] text-accent-c bg-accent-soft px-3 py-1 rounded-full transition-all">{CONCEPT_TAG[concept]}</span>
+          <span className="text-[9px] tracking-[0.18em] text-accent-c bg-accent-soft px-3 py-1 rounded-full transition-all">{CONCEPT_LABEL[concept]}</span>
         </div>
         <div key={concept} className="grid md:grid-cols-[1.25fr_1fr] gap-10 md:gap-14 items-start animate-fade-up">
           <div className="reveal group relative aspect-[4/3] overflow-hidden rounded-sm bg-[hsl(var(--ink-faint))]">
@@ -286,7 +353,7 @@ export default function Index() {
               {namguList.map((it, i) => (
                 <article key={it.img} className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[3/2] overflow-hidden mb-3 rounded-sm bg-[hsl(var(--ink-faint))]">
-                    <SoloImg src={it.img} alt={it.name} />
+                    <ArchImg base={it.img} alt={it.name} isNight={isNight} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="font-serif-kr italic text-xs text-white">자세히 보기</span>
                     </div>
@@ -297,12 +364,12 @@ export default function Index() {
                 </article>
               ))}
             </div>
-            {!moreNamgu && (
-              <div className="mt-7 flex items-center gap-3.5">
-                <button onClick={()=>setMoreNamgu(true)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">더보기</button>
-                <span className="text-[10px] text-ink-light">+ 3곳 더 있어요</span>
-              </div>
-            )}
+            <div className="mt-7 flex items-center gap-3.5">
+              <button onClick={()=>setMoreNamgu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
+                {moreNamgu ? "접기" : "더보기"}
+              </button>
+              <span className="text-[10px] text-ink-light">{moreNamgu ? "전체 6곳을 보고 있어요" : "+ 3곳 더 있어요"}</span>
+            </div>
           </>
         )}
 
@@ -316,7 +383,7 @@ export default function Index() {
               {jungguList.map((it, i) => (
                 <article key={it.img} className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[3/2] overflow-hidden mb-3 rounded-sm bg-[hsl(var(--ink-faint))]">
-                    <SoloImg src={it.img} alt={it.name} />
+                    <ArchImg base={it.img} alt={it.name} isNight={isNight} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="font-serif-kr italic text-xs text-white">자세히 보기</span>
                     </div>
@@ -327,12 +394,12 @@ export default function Index() {
                 </article>
               ))}
             </div>
-            {!moreJunggu && (
-              <div className="mt-7 flex items-center gap-3.5">
-                <button onClick={()=>setMoreJunggu(true)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">더보기</button>
-                <span className="text-[10px] text-ink-light">+ 3곳 더 있어요</span>
-              </div>
-            )}
+            <div className="mt-7 flex items-center gap-3.5">
+              <button onClick={()=>setMoreJunggu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
+                {moreJunggu ? "접기" : "더보기"}
+              </button>
+              <span className="text-[10px] text-ink-light">{moreJunggu ? "전체 6곳을 보고 있어요" : "+ 3곳 더 있어요"}</span>
+            </div>
           </>
         )}
 
@@ -351,20 +418,88 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Guide */}
+      {/* Guide — 페이지 넘김 */}
       <section id="guide" className="px-6 md:px-14 py-24 bg-guide transition-colors duration-700">
-        <p className="reveal text-[9px] tracking-[0.3em] text-white/25 flex items-center gap-3.5 mb-6">
-          WALKING GUIDE<span className="block w-7 h-px bg-accent-c" />
-        </p>
-        <h2 className="reveal font-serif-kr text-3xl text-white/80 mb-12">울산의 길을 걷기 전에</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-white/[0.07]">
-          {GUIDE.map((g,i)=>(
-            <div key={g.n} className="reveal p-7 border-b md:border-b-0 md:border-r last:border-r-0 border-white/[0.07] hover:bg-white/[0.025] transition-colors" style={{ transitionDelay: `${i*100}ms` }}>
-              <div className="font-display text-4xl text-accent-c opacity-40 leading-none mb-3.5">{g.n}</div>
-              <p className="font-serif-kr text-sm text-white/75 mb-2.5">{g.t}</p>
-              <p className="text-[11px] leading-[1.95] text-white/35">{g.d}</p>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-8">
+          <p className="reveal text-[9px] tracking-[0.3em] text-white/30 flex items-center gap-3.5">
+            WALKING GUIDE<span className="block w-7 h-px bg-accent-c" />
+          </p>
+          <span className="text-[9px] tracking-[0.2em] text-white/40 tabular-nums">
+            {String(guidePage + 1).padStart(2, "0")} / 05
+          </span>
+        </div>
+
+        <div className="relative min-h-[420px]">
+          {/* 페이지 0 — 인트로 */}
+          <article key={`g-${guidePage}`} className="animate-fade-up">
+            {guidePage === 0 ? (
+              <div className="grid md:grid-cols-[1fr_1fr] gap-10 md:gap-16 items-start">
+                <div>
+                  <p className="font-display italic text-accent-c text-2xl md:text-3xl mb-6 opacity-80">— Prologue</p>
+                  <h2 className="font-serif-kr text-3xl md:text-[42px] leading-[1.35] text-white/85 mb-4">
+                    {GUIDE_INTRO.title}<br/>
+                    <span className="text-accent-c">{GUIDE_INTRO.subtitle}</span>
+                  </h2>
+                </div>
+                <div className="md:pt-16">
+                  <p className="font-serif-kr italic text-[15px] leading-[2.1] text-white/55">
+                    {GUIDE_INTRO.body}
+                  </p>
+                  <div className="mt-8 flex items-center gap-3 text-[10px] tracking-[0.2em] text-white/35">
+                    <span className="block w-7 h-px bg-accent-c" />
+                    TRACK : 052 · ULSAN
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-[1fr_1.4fr] gap-10 md:gap-16 items-start">
+                <div>
+                  <div className="font-display text-7xl md:text-[110px] text-accent-c opacity-30 leading-none mb-5">
+                    {GUIDE[guidePage - 1].n}
+                  </div>
+                  <h3 className="font-serif-kr text-2xl md:text-3xl text-white/85">
+                    {GUIDE[guidePage - 1].t}
+                  </h3>
+                </div>
+                <div className="md:pt-12 space-y-6">
+                  <p className="font-serif-kr text-base md:text-lg leading-[2] text-white/70">
+                    {GUIDE[guidePage - 1].d}
+                  </p>
+                  <p className="text-[12px] leading-[2] text-white/40 border-l border-white/15 pl-5">
+                    {GUIDE[guidePage - 1].extra}
+                  </p>
+                </div>
+              </div>
+            )}
+          </article>
+        </div>
+
+        {/* 페이지 컨트롤 */}
+        <div className="mt-12 flex items-center justify-between border-t border-white/[0.07] pt-6">
+          <button
+            onClick={() => setGuidePage((p) => Math.max(0, p - 1))}
+            disabled={guidePage === 0}
+            className="text-[10px] tracking-[0.22em] text-white/55 hover:text-accent-c transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            ← 이전 장
+          </button>
+          <div className="flex gap-2">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <button
+                key={i}
+                onClick={() => setGuidePage(i)}
+                className={`h-1 rounded-full transition-all ${guidePage === i ? "w-8 bg-accent-c" : "w-4 bg-white/15 hover:bg-white/30"}`}
+                aria-label={`Page ${i + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => setGuidePage((p) => Math.min(4, p + 1))}
+            disabled={guidePage === 4}
+            className="text-[10px] tracking-[0.22em] text-white/55 hover:text-accent-c transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+          >
+            다음 장 →
+          </button>
         </div>
       </section>
 
@@ -393,7 +528,7 @@ export default function Index() {
       <footer className={`px-6 md:px-14 pt-14 pb-8 transition-colors duration-700 ${isNight ? "bg-[#030407]" : "bg-[#0e0d0b]"}`}>
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-7 pb-10 border-b border-white/[0.07] mb-6">
           <div>
-            <p className="text-[10px] tracking-[0.35em] text-white/60 mb-2.5">TRACK 052</p>
+            <p className="text-[10px] tracking-[0.35em] text-white/60 mb-2.5">TRACK : 052</p>
             <p className="text-[11px] text-white/25 leading-[1.9] max-w-[200px]">울산의 숨은 길을 기록합니다.<br/>갓길 · 샛길 · 지름길.</p>
           </div>
           <div className="flex flex-col gap-2.5 md:items-end">
@@ -405,7 +540,7 @@ export default function Index() {
           </div>
         </div>
         <div className="flex flex-col-reverse md:flex-row md:justify-between md:items-center gap-4">
-          <p className="text-[9px] tracking-wider text-white/15">© 2025 TRACK 052. ALL RIGHTS RESERVED.</p>
+          <p className="text-[9px] tracking-wider text-white/15">© 2025 TRACK : 052. ALL RIGHTS RESERVED.</p>
           <div className="flex gap-5">
             {["INSTAGRAM","ABOUT","CONTACT"].map((l)=>(
               <a key={l} href="#" className="text-[9px] tracking-wider text-white/25 hover:text-accent-c transition-colors">{l}</a>
