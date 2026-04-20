@@ -183,6 +183,9 @@ export default function Index() {
     return () => clearInterval(t);
   }, []);
 
+  // 진행바 리셋 — 페이지가 바뀔 때마다 애니메이션 키 갱신
+  useEffect(() => { setGuideTick((k) => k + 1); }, [guidePage]);
+
   useEffect(() => {
     observerRef.current?.disconnect();
     const io = new IntersectionObserver((entries) => {
@@ -193,7 +196,9 @@ export default function Index() {
     return () => io.disconnect();
   }, [concept, filter, moreNamgu, moreJunggu, guidePage, intro]);
 
-  const pick = PICKS[concept];
+  // Track 선택 시엔 랜덤 픽, 그 외엔 해당 컨셉
+  const pickConcept: PickConcept = concept === "track" ? trackPick : concept;
+  const pick = PICKS[pickConcept];
   const namguList = moreNamgu ? NAMGU : NAMGU.filter((i) => !i.extra);
   const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
