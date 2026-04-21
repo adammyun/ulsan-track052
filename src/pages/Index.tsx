@@ -260,51 +260,68 @@ export default function Index() {
           </g>
         </svg>
 
-        {/* 선택한 개념이 [Track:052] 자리를 완전히 대체 */}
-        <div className="relative z-10 flex items-center justify-center gap-6 md:gap-10 w-full max-w-6xl animate-fade-up">
-          {/* 왼쪽 */}
+        {/* 대괄호 위치 고정 — 안의 텍스트만 우아하게 교체 */}
+        <div className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up">
           <button
-            onClick={() => setConcept(cycle.left)}
-            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/60 transition-all duration-500"
-            aria-label={`Select ${cycle.left}`}
+            onClick={() => {
+              if (concept === "track") {
+                const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
+                const next = arr.filter((p) => p !== trackPick);
+                setTrackPick(next[Math.floor(Math.random() * next.length)]);
+              }
+            }}
+            aria-label="Selected concept"
+            className="group inline-grid grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-5"
           >
-            {CONCEPT_LABEL[cycle.left]}
-          </button>
+            {/* [ — 위치 고정 */}
+            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none">[</span>
 
-          {/* 중앙 — 선택된 개념이 Track:052 자리를 완전히 대체 */}
-          <div className="flex items-baseline flex-shrink-0">
-            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">[</span>
-            <button
-              key={concept === "track" ? `track-${trackPick}` : concept}
-              onClick={() => {
-                if (concept === "track") {
-                  // 다른 픽으로 변경
-                  const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
-                  const next = arr.filter((p) => p !== trackPick);
-                  setTrackPick(next[Math.floor(Math.random() * next.length)]);
-                }
-              }}
-              className={`font-serif-kr text-accent-c leading-none -tracking-[0.02em] px-3 md:px-5 inline-block transition-all ${
-                concept === "track"
-                  ? "text-3xl md:text-5xl lg:text-6xl"
-                  : "text-4xl md:text-6xl lg:text-7xl"
-              }`}
-              style={{ animation: "fade-up .55s ease forwards" }}
-              aria-label="Selected concept"
+            {/* 텍스트 슬롯 — 고정 폭, 내용만 페이드 */}
+            <span
+              className="relative block min-w-[7.5rem] md:min-w-[14rem] lg:min-w-[18rem] h-[1em] overflow-hidden"
+              style={{ height: "1.05em" }}
             >
-              {CONCEPT_LABEL[cycle.center]}
-            </button>
-            <span className="font-display text-5xl md:text-7xl lg:text-8xl text-white leading-none -tracking-[0.02em]">]</span>
-          </div>
+              <span
+                key={concept === "track" ? `track-${trackPick}` : concept}
+                className={`absolute inset-0 flex items-center justify-center font-serif-kr text-accent-c leading-none -tracking-[0.02em] whitespace-nowrap ${
+                  concept === "track"
+                    ? "text-3xl md:text-5xl lg:text-6xl"
+                    : "text-4xl md:text-6xl lg:text-7xl"
+                }`}
+                style={{ animation: "fade-up .6s cubic-bezier(.22,1,.36,1) both" }}
+              >
+                {CONCEPT_LABEL[cycle.center]}
+              </span>
+            </span>
 
-          {/* 오른쪽 */}
-          <button
-            onClick={() => setConcept(cycle.right)}
-            className="font-serif-kr text-base md:text-2xl whitespace-nowrap text-white/30 hover:text-white/60 transition-all duration-500"
-            aria-label={`Select ${cycle.right}`}
-          >
-            {CONCEPT_LABEL[cycle.right]}
+            {/* ] — 위치 고정 */}
+            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none">]</span>
           </button>
+
+          {/* 컨셉 셀렉터 — 가는 가로선 위에 4개 라벨 */}
+          <div className="mt-10 md:mt-12 flex items-center gap-5 md:gap-8">
+            {CYCLE.map((c, i) => {
+              const active = concept === c;
+              return (
+                <div key={c} className="flex items-center gap-5 md:gap-8">
+                  <button
+                    onClick={() => setConcept(c)}
+                    className={`relative text-[10px] md:text-[11px] tracking-[0.28em] uppercase transition-all duration-500 ${
+                      active ? "text-accent-c" : "text-white/35 hover:text-white/70"
+                    }`}
+                  >
+                    <span className="font-sans-kr">{c === "track" ? "TRACK 052" : CONCEPT_LABEL[c]}</span>
+                    <span
+                      className={`absolute -bottom-2 left-0 h-px bg-accent-c transition-all duration-500 ${
+                        active ? "w-full opacity-100" : "w-0 opacity-0"
+                      }`}
+                    />
+                  </button>
+                  {i < CYCLE.length - 1 && <span className="w-1 h-1 rounded-full bg-white/20" />}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="relative z-10 mt-8 animate-fade-up">
