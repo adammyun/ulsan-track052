@@ -284,18 +284,19 @@ export default function Index() {
                 const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
                 const next = arr.filter((p) => p !== trackPick);
                 setTrackPick(next[Math.floor(Math.random() * next.length)]);
+                setSlotKey((k) => k + 1);
               }
             }}
             aria-label="Selected concept"
-            className="group inline-grid grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-5"
+            className="group inline-flex items-center justify-center gap-3 md:gap-5"
           >
             {/* [ — 위치 고정 */}
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none">[</span>
+            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">[</span>
 
             {/* 텍스트 슬롯 — 고정 폭, 좌/우에서 슬라이드 인 */}
             <span
-              className="relative block min-w-[12rem] md:min-w-[20rem] lg:min-w-[26rem] overflow-hidden px-2"
-              style={{ height: "1.15em" }}
+              className="relative inline-block overflow-hidden align-middle shrink-0"
+              style={{ width: "clamp(12rem, 38vw, 26rem)", height: "1.15em" }}
             >
               <span
                 key={slotKey}
@@ -310,7 +311,7 @@ export default function Index() {
             </span>
 
             {/* ] — 위치 고정 */}
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none">]</span>
+            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">]</span>
           </button>
 
           {/* 컨셉 셀렉터 — 가는 가로선 위에 4개 라벨 */}
