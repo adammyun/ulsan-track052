@@ -163,7 +163,23 @@ export default function Index() {
   const [moreJunggu, setMoreJunggu] = useState(false);
   const [guidePage, setGuidePage] = useState(0); // 0 = intro, 1..4 = chapters
   const [guideTick, setGuideTick] = useState(0); // 진행바 리셋용 키
+  const [slotDir, setSlotDir] = useState<"r" | "l">("r"); // 텍스트 슬롯 슬라이드 방향
+  const [slotKey, setSlotKey] = useState(0); // 같은 컨셉 재선택 시에도 재실행
+  const prevConceptRef = useRef<Concept>(concept);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // 컨셉/픽 변경 시 슬라이드 방향 결정
+  useEffect(() => {
+    const prev = prevConceptRef.current;
+    if (prev !== concept) {
+      const pi = CYCLE.indexOf(prev);
+      const ci = CYCLE.indexOf(concept);
+      const forward = (ci - pi + CYCLE.length) % CYCLE.length <= CYCLE.length / 2;
+      setSlotDir(forward ? "r" : "l");
+      prevConceptRef.current = concept;
+    }
+    setSlotKey((k) => k + 1);
+  }, [concept, trackPick]);
 
   useEffect(() => {
     const t = setTimeout(() => setIntro(false), 2400);
