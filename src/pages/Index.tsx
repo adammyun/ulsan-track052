@@ -276,43 +276,60 @@ export default function Index() {
           </g>
         </svg>
 
-        {/* 대괄호 위치 고정 — 안의 텍스트만 우아하게 교체 */}
+        {/* 대괄호 위치 고정 — 안의 텍스트만 교체, 좌우 이웃 컨셉 동시 노출 */}
         <div className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up">
-          <button
-            onClick={() => {
-              if (concept === "track") {
-                const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
-                const next = arr.filter((p) => p !== trackPick);
-                setTrackPick(next[Math.floor(Math.random() * next.length)]);
-                setSlotKey((k) => k + 1);
-              }
-            }}
-            aria-label="Selected concept"
-            className="group inline-flex items-center justify-center gap-3 md:gap-5"
-          >
-            {/* [ — 위치 고정 */}
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">[</span>
-
-            {/* 텍스트 슬롯 — 고정 폭, 좌/우에서 슬라이드 인 */}
-            <span
-              className="relative inline-block overflow-hidden align-middle shrink-0"
-              style={{ width: "clamp(12rem, 38vw, 26rem)", height: "1.15em" }}
+          <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 w-full">
+            <div
+              key={`left-${slotKey}-${cycle.left}`}
+              aria-hidden="true"
+              className={`hidden md:flex w-[clamp(6rem,18vw,14rem)] items-center justify-end whitespace-nowrap font-serif-kr text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-opacity ${slotDir === "r" ? "animate-slide-in-l" : "animate-slide-in-r"}`}
             >
-              <span
-                key={slotKey}
-                className={`absolute inset-0 flex items-center justify-center font-serif-kr text-accent-c leading-[1.05] -tracking-[0.02em] whitespace-nowrap ${
-                  concept === "track"
-                    ? "text-3xl md:text-5xl lg:text-6xl"
-                    : "text-4xl md:text-6xl lg:text-7xl"
-                } ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
-              >
-                {CONCEPT_LABEL[cycle.center]}
-              </span>
-            </span>
+              {CONCEPT_LABEL[cycle.left]}
+            </div>
 
-            {/* ] — 위치 고정 */}
-            <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">]</span>
-          </button>
+            <button
+              onClick={() => {
+                if (concept === "track") {
+                  const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
+                  const next = arr.filter((p) => p !== trackPick);
+                  setTrackPick(next[Math.floor(Math.random() * next.length)]);
+                  setSlotKey((k) => k + 1);
+                }
+              }}
+              aria-label="Selected concept"
+              className="group inline-flex items-center justify-center gap-2 md:gap-4 lg:gap-5 shrink-0"
+            >
+              <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">[</span>
+
+              <div
+                className="relative flex items-center justify-center overflow-hidden align-middle shrink-0"
+                style={{ width: "clamp(13rem, 40vw, 28rem)", height: "clamp(5.25rem, 10vw, 8.5rem)" }}
+              >
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                  <div
+                    key={`center-${slotKey}-${cycle.center}`}
+                    className={`inline-flex items-center justify-center whitespace-nowrap px-2 md:px-3 py-[0.14em] font-serif-kr text-accent-c leading-[1.08] -tracking-[0.02em] will-change-transform ${
+                      concept === "track"
+                        ? "text-[2rem] md:text-[3.35rem] lg:text-[4.2rem]"
+                        : "text-[2.35rem] md:text-[3.9rem] lg:text-[5rem]"
+                    } ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
+                  >
+                    {CONCEPT_LABEL[cycle.center]}
+                  </div>
+                </div>
+              </div>
+
+              <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">]</span>
+            </button>
+
+            <div
+              key={`right-${slotKey}-${cycle.right}`}
+              aria-hidden="true"
+              className={`hidden md:flex w-[clamp(6rem,18vw,14rem)] items-center justify-start whitespace-nowrap font-serif-kr text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-opacity ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
+            >
+              {CONCEPT_LABEL[cycle.right]}
+            </div>
+          </div>
 
           {/* 컨셉 셀렉터 — 가는 가로선 위에 4개 라벨 */}
           <div className="mt-10 md:mt-12 flex items-center gap-5 md:gap-8">
