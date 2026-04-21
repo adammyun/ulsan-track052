@@ -69,14 +69,14 @@ const JUNGGU: ArchItem[] = [
   { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true },
 ];
 
-// 무드보드 — 가이드 파일명 사용. 야경 컷(jangseongpo, samsan)은 자체로 밤, 그 외는 day 이미지 공유.
+// 무드보드 — 낮/밤 별도 이미지. 밤은 같은 장소의 또다른 자연 야경.
 const MOOD: { day: string; night: string; label: string; ratio: string }[] = [
-  { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
-  { day: "mood-seongnam-spring",   night: "mood-seongnam-spring",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
-  { day: "mood-seonam-dawn",       night: "mood-seonam-dawn",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
-  { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night", label: "장생포 야경",         ratio: "aspect-[3/4]" },
-  { day: "mood-hakseong-winter",   night: "mood-hakseong-winter",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
-  { day: "mood-samsan-evening",    night: "mood-samsan-evening",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
+  { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn-night",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
+  { day: "mood-seongnam-spring",   night: "mood-seongnam-spring-night",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
+  { day: "mood-seonam-dawn",       night: "mood-seonam-dawn-night",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
+  { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night",       label: "장생포 야경",         ratio: "aspect-[3/4]" },
+  { day: "mood-hakseong-winter",   night: "mood-hakseong-winter-night",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
+  { day: "mood-samsan-evening",    night: "mood-samsan-evening-night",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
 ];
 
 // 가이드 — 4페이지의 챕터식 페이지 넘김
@@ -163,7 +163,23 @@ export default function Index() {
   const [moreJunggu, setMoreJunggu] = useState(false);
   const [guidePage, setGuidePage] = useState(0); // 0 = intro, 1..4 = chapters
   const [guideTick, setGuideTick] = useState(0); // 진행바 리셋용 키
+  const [slotDir, setSlotDir] = useState<"r" | "l">("r"); // 텍스트 슬롯 슬라이드 방향
+  const [slotKey, setSlotKey] = useState(0); // 같은 컨셉 재선택 시에도 재실행
+  const prevConceptRef = useRef<Concept>(concept);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // 컨셉/픽 변경 시 슬라이드 방향 결정
+  useEffect(() => {
+    const prev = prevConceptRef.current;
+    if (prev !== concept) {
+      const pi = CYCLE.indexOf(prev);
+      const ci = CYCLE.indexOf(concept);
+      const forward = (ci - pi + CYCLE.length) % CYCLE.length <= CYCLE.length / 2;
+      setSlotDir(forward ? "r" : "l");
+      prevConceptRef.current = concept;
+    }
+    setSlotKey((k) => k + 1);
+  }, [concept, trackPick]);
 
   useEffect(() => {
     const t = setTimeout(() => setIntro(false), 2400);
@@ -276,19 +292,18 @@ export default function Index() {
             {/* [ — 위치 고정 */}
             <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none">[</span>
 
-            {/* 텍스트 슬롯 — 고정 폭, 내용만 페이드 */}
+            {/* 텍스트 슬롯 — 고정 폭, 좌/우에서 슬라이드 인 */}
             <span
-              className="relative block min-w-[7.5rem] md:min-w-[14rem] lg:min-w-[18rem] h-[1em] overflow-hidden"
-              style={{ height: "1.05em" }}
+              className="relative block min-w-[12rem] md:min-w-[20rem] lg:min-w-[26rem] overflow-hidden px-2"
+              style={{ height: "1.15em" }}
             >
               <span
-                key={concept === "track" ? `track-${trackPick}` : concept}
-                className={`absolute inset-0 flex items-center justify-center font-serif-kr text-accent-c leading-none -tracking-[0.02em] whitespace-nowrap ${
+                key={slotKey}
+                className={`absolute inset-0 flex items-center justify-center font-serif-kr text-accent-c leading-[1.05] -tracking-[0.02em] whitespace-nowrap ${
                   concept === "track"
                     ? "text-3xl md:text-5xl lg:text-6xl"
                     : "text-4xl md:text-6xl lg:text-7xl"
-                }`}
-                style={{ animation: "fade-up .6s cubic-bezier(.22,1,.36,1) both" }}
+                } ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
               >
                 {CONCEPT_LABEL[cycle.center]}
               </span>
