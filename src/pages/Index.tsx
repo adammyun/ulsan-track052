@@ -30,43 +30,47 @@ const cycleAround = (c: Concept) => {
 
 const PICKS: Record<PickConcept, {
   img: string; type: string; title: string[]; loc: string; essay: string[]; badges: string[];
+  density: number; safety: number;
 }> = {
   gatgil: {
     img: "pick-seonam", type: "갓길 — 잠시 쉬어가는 길",
     title: ["선암호수 벤치,", "아무것도 안 해도 되는 곳"], loc: "울산 남구 선암동 · 선암호수공원",
     essay: ["호수 옆 벤치에 앉으면 시간이 다르게 흐른다.", "오리들이 물 위를 지나가고, 바람이 불어오고,", "아무것도 하지 않아도 괜찮다는 기분이", "조용히 찾아오는 울산의 갓길."],
     badges: ["도보 30분", "쉬움", "연중 추천", "반려동물 가능"],
+    density: 3, safety: 4,
   },
   saetgil: {
     img: "pick-seongnam", type: "샛길 — 아무도 모르는 예쁜 길",
     title: ["성남동 뒷골목,", "유명하지 않아서 더 좋은"], loc: "울산 중구 성남동 · 번영로 뒷편",
     essay: ["번화가 뒤편으로 한 블록만 들어가면", "오래된 담벼락에 꽃이 피어있다.", "관광 안내도에는 없는 그 골목이", "이 도시에서 가장 예쁜 샛길이다."],
     badges: ["도보 15분", "쉬움", "봄·가을", "사진 명소"],
+    density: 2, safety: 3,
   },
   jireum: {
     img: "pick-hakseong", type: "지름길 — 현지인만 아는 빠른 길",
     title: ["학성공원 뒷길,", "30분을 아끼는 현지인 루트"], loc: "울산 중구 학성동 · 학성공원 북쪽 사면",
     essay: ["정식 등산로를 따라가면 돌아가는 길,", "공원 북쪽 담장을 따라 걸으면", "30분이 절약된다. 게다가 중간에 나오는", "전망 포인트는 정식 코스에는 없다."],
     badges: ["도보 25분", "보통", "아침 추천", "뷰포인트"],
+    density: 4, safety: 3,
   },
 };
 
-type ArchItem = { img: string; type: string; name: string; meta: string; tags: string; extra?: boolean };
+type ArchItem = { img: string; type: string; name: string; meta: string; tags: string; extra?: boolean; density: number; safety: number };
 const NAMGU: ArchItem[] = [
-  { img: "arch-samsan-alley", type: "샛길", name: "삼산동 주택가 골목", meta: "남구 · 20분 · 쉬움", tags: "namgu" },
-  { img: "arch-jangseongpo", type: "갓길", name: "장생포 고래문화마을", meta: "남구 · 40분 · 쉬움", tags: "namgu" },
-  { img: "arch-seonam-shortcut", type: "지름길", name: "선암호수공원 숏컷", meta: "남구 · 25분 · 쉬움", tags: "namgu" },
-  { img: "arch-sinjeong-mural", type: "샛길", name: "신정동 벽화 골목", meta: "남구 · 25분 · 쉬움", tags: "namgu", extra: true },
-  { img: "arch-namgu-riverside", type: "갓길", name: "남구 강변 둘레길", meta: "남구 · 50분 · 쉬움", tags: "namgu", extra: true },
-  { img: "arch-sinjeong-market", type: "지름길", name: "신정 시장 뒷길", meta: "남구 · 15분 · 쉬움", tags: "namgu", extra: true },
+  { img: "arch-samsan-alley", type: "샛길", name: "삼산동 주택가 골목", meta: "남구 · 20분 · 쉬움", tags: "namgu", density: 3, safety: 3 },
+  { img: "arch-jangseongpo", type: "갓길", name: "장생포 고래문화마을", meta: "남구 · 40분 · 쉬움", tags: "namgu", density: 4, safety: 4 },
+  { img: "arch-seonam-shortcut", type: "지름길", name: "선암호수공원 숏컷", meta: "남구 · 25분 · 쉬움", tags: "namgu", density: 3, safety: 4 },
+  { img: "arch-sinjeong-mural", type: "샛길", name: "신정동 벽화 골목", meta: "남구 · 25분 · 쉬움", tags: "namgu", extra: true, density: 2, safety: 3 },
+  { img: "arch-namgu-riverside", type: "갓길", name: "남구 강변 둘레길", meta: "남구 · 50분 · 쉬움", tags: "namgu", extra: true, density: 4, safety: 4 },
+  { img: "arch-sinjeong-market", type: "지름길", name: "신정 시장 뒷길", meta: "남구 · 15분 · 쉬움", tags: "namgu", extra: true, density: 5, safety: 3 },
 ];
 const JUNGGU: ArchItem[] = [
-  { img: "arch-taehwa-reeds", type: "갓길", name: "태화강 둔치 억새밭", meta: "중구 · 20분 · 쉬움", tags: "junggu" },
-  { img: "arch-seongnam-flower", type: "샛길", name: "성남동 꽃담 골목", meta: "중구 · 15분 · 쉬움", tags: "junggu" },
-  { img: "arch-hakseong-trail", type: "지름길", name: "학성공원 우회 산책로", meta: "중구 · 30분 · 보통", tags: "junggu" },
-  { img: "arch-jungang-market", type: "샛길", name: "중앙시장 뒷골목", meta: "중구 · 20분 · 쉬움", tags: "junggu", extra: true },
-  { img: "arch-taehwa-bridge", type: "갓길", name: "태화교 다리 산책길", meta: "중구 · 30분 · 쉬움", tags: "junggu", extra: true },
-  { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true },
+  { img: "arch-taehwa-reeds", type: "갓길", name: "태화강 둔치 억새밭", meta: "중구 · 20분 · 쉬움", tags: "junggu", density: 5, safety: 5 },
+  { img: "arch-seongnam-flower", type: "샛길", name: "성남동 꽃담 골목", meta: "중구 · 15분 · 쉬움", tags: "junggu", density: 2, safety: 3 },
+  { img: "arch-hakseong-trail", type: "지름길", name: "학성공원 우회 산책로", meta: "중구 · 30분 · 보통", tags: "junggu", density: 3, safety: 3 },
+  { img: "arch-jungang-market", type: "샛길", name: "중앙시장 뒷골목", meta: "중구 · 20분 · 쉬움", tags: "junggu", extra: true, density: 4, safety: 2 },
+  { img: "arch-taehwa-bridge", type: "갓길", name: "태화교 다리 산책길", meta: "중구 · 30분 · 쉬움", tags: "junggu", extra: true, density: 4, safety: 4 },
+  { img: "arch-hakseong-ridge", type: "지름길", name: "학성 능선 지름길", meta: "중구 · 20분 · 보통", tags: "junggu", extra: true, density: 2, safety: 2 },
 ];
 
 // 무드보드 — 낮/밤 별도 이미지. 밤은 같은 장소의 또다른 자연 야경.
