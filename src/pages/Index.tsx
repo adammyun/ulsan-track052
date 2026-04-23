@@ -478,6 +478,11 @@ export default function Index() {
                   <p className="font-serif-kr text-[15px] text-ink mb-1">{it.name}</p>
                   <p className="text-[10px] text-ink-light tracking-wide mb-2">{it.meta}</p>
                   <Dots size="xs" value={isNight ? it.safety : it.density} label={isNight ? "안전" : "혼잡"} />
+                </article>
+              ))}
+            </div>
+            <div className="mt-7 flex items-center gap-3.5">
+              <button onClick={()=>setMoreNamgu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
                 {moreNamgu ? "접기" : "더보기"}
               </button>
               <span className="text-[10px] text-ink-light">{moreNamgu ? "전체 6곳을 보고 있어요" : "+ 3곳 더 있어요"}</span>
