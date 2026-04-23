@@ -418,7 +418,13 @@ export default function Index() {
             <h2 className="font-serif-kr text-2xl md:text-[28px] leading-[1.35] mb-2 text-ink">
               {pick.title.map((t, i) => <span key={i}>{t}<br/></span>)}
             </h2>
-            <p className="text-[11px] text-ink-light tracking-wider mb-6 pb-6 border-b border-faint">{pick.loc}</p>
+            <p className="text-[11px] text-ink-light tracking-wider mb-4">{pick.loc}</p>
+            <div className="mb-6 pb-6 border-b border-faint">
+              <Dots
+                value={isNight ? pick.safety : pick.density}
+                label={isNight ? "혼자 안전도" : "인구 밀집도"}
+              />
+            </div>
             <p className="font-serif-kr italic text-sm text-ink-mid leading-[2.1] mb-7">
               {pick.essay.map((l, i) => <span key={i}>{l}<br/></span>)}
             </p>
