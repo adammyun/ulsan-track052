@@ -152,6 +152,27 @@ function MoodImg({ day, night, alt, isNight }: { day: string; night: string; alt
   );
 }
 
+// 5점 도트 인디케이터 — 낮: 인구 밀집도 / 밤: 혼자 다닐 때 안전도
+function Dots({ value, label, tone = "ink", size = "sm" }: { value: number; label: string; tone?: "ink" | "light"; size?: "sm" | "xs" }) {
+  const v = Math.max(0, Math.min(5, value));
+  const dot = size === "xs" ? "w-1.5 h-1.5" : "w-2 h-2";
+  const filled = "bg-accent-c border-[hsl(var(--accent))]";
+  const empty = tone === "light"
+    ? "bg-transparent border-white/30"
+    : "bg-transparent border-[hsl(var(--ink-faint))]";
+  const labelColor = tone === "light" ? "text-white/55" : "text-ink-light";
+  return (
+    <div className="inline-flex items-center gap-2" aria-label={`${label} ${v} / 5`}>
+      <span className={`text-[9px] tracking-[0.2em] ${labelColor} uppercase`}>{label}</span>
+      <span className="inline-flex items-center gap-1">
+        {[0,1,2,3,4].map((i) => (
+          <span key={i} className={`${dot} rounded-full border transition-colors ${i < v ? filled : empty}`} />
+        ))}
+      </span>
+    </div>
+  );
+}
+
 // ── 메인 ──────────────────────────────────────────────────────────
 export default function Index() {
   const [intro, setIntro] = useState(true);
