@@ -498,19 +498,21 @@ export default function Index() {
               <span className="text-[10px] tracking-[0.2em] text-ink-light">중구</span>
               <div className="flex-1 h-px bg-[hsl(var(--ink-faint))]" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {jungguList.map((it, i) => (
                 <article key={it.img} className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
-                  <div className="relative aspect-[3/2] overflow-hidden mb-3 rounded-sm bg-[hsl(var(--ink-faint))]">
+                  <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="font-serif-kr italic text-xs text-white">자세히 보기</span>
+                      <span className="font-serif-kr italic text-sm text-white">자세히 보기</span>
                     </div>
+                    <span className="absolute top-3 left-3 text-[10px] tracking-[0.22em] px-2.5 py-1 rounded-full bg-paper/90 text-accent-c backdrop-blur-sm">
+                      {it.type}
+                    </span>
                   </div>
-                  <p className="text-[9px] tracking-[0.18em] text-accent-c mb-1">{it.type}</p>
-                  <p className="font-serif-kr text-[15px] text-ink mb-1">{it.name}</p>
-                  <p className="text-[10px] text-ink-light tracking-wide mb-2">{it.meta}</p>
-                  <Dots size="xs" value={isNight ? it.safety : it.density} label={isNight ? "안전" : "혼잡"} />
+                  <p className="font-serif-kr text-[20px] md:text-[22px] leading-tight text-ink mb-1.5">{it.name}</p>
+                  <p className="text-[11px] text-ink-light tracking-wide mb-3">{it.meta}</p>
+                  <Dots value={isNight ? it.safety : it.density} label={isNight ? "안전도" : "밀집도"} />
                 </article>
               ))}
             </div>
