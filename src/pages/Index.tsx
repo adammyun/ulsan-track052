@@ -18,6 +18,7 @@ const CONCEPT_DESC: Record<Concept, string> = {
 
 // 순환 순서: 선택한 요소 기준으로 [left, center(selected), right]
 const CYCLE: Concept[] = ["track", "gatgil", "saetgil", "jireum"];
+const PICK_CYCLE: PickConcept[] = ["gatgil", "saetgil", "jireum"];
 const cycleAround = (c: Concept) => {
   const i = CYCLE.indexOf(c);
   const n = CYCLE.length;
@@ -25,6 +26,15 @@ const cycleAround = (c: Concept) => {
     left: CYCLE[(i + n - 1) % n],
     center: c,
     right: CYCLE[(i + 1) % n],
+  };
+};
+const cycleAroundPick = (c: PickConcept) => {
+  const i = PICK_CYCLE.indexOf(c);
+  const n = PICK_CYCLE.length;
+  return {
+    left: PICK_CYCLE[(i + n - 1) % n],
+    center: c,
+    right: PICK_CYCLE[(i + 1) % n],
   };
 };
 
@@ -244,7 +254,12 @@ export default function Index() {
   const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
   const showJunggu = filter !== "namgu";
-  const cycle = useMemo(() => cycleAround(concept), [concept]);
+  const displayConcept = concept === "track" ? trackPick : concept;
+  const cycle = useMemo(() => cycleAroundPick(displayConcept), [displayConcept]);
+  const setHeroConcept = (next: PickConcept) => {
+    setConcept(next);
+    setTrackPick(next);
+  };
 
   return (
     <main className="bg-paper text-ink min-h-screen">
@@ -301,27 +316,26 @@ export default function Index() {
           </g>
         </svg>
 
-        {/* 대괄호 위치 고정 — 안의 텍스트만 교체, 좌우 이웃 컨셉 동시 노출 */}
+        {/* 대괄호 위치 고정 — 좌우 요소 클릭으로 갓길/샛길/지름길 전환 */}
         <div className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up">
           <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 w-full">
-            <div
+            <button
+              type="button"
               key={`left-${slotKey}-${cycle.left}`}
-              aria-hidden="true"
-              className={`hidden md:flex w-[clamp(6rem,18vw,14rem)] items-center justify-end whitespace-nowrap font-serif-kr text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-opacity ${slotDir === "r" ? "animate-slide-in-l" : "animate-slide-in-r"}`}
+              onClick={() => setHeroConcept(cycle.left)}
+              aria-label={`${CONCEPT_LABEL[cycle.left]}로 전환`}
+              className={`flex w-[clamp(3.25rem,18vw,14rem)] items-center justify-end whitespace-nowrap font-serif-kr text-lg md:text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-colors hover:text-white/70 focus-visible:outline-none focus-visible:text-white/80 ${slotDir === "r" ? "animate-slide-in-l" : "animate-slide-in-r"}`}
             >
               {CONCEPT_LABEL[cycle.left]}
-            </div>
+            </button>
 
             <button
+              type="button"
               onClick={() => {
-                if (concept === "track") {
-                  const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
-                  const next = arr.filter((p) => p !== trackPick);
-                  setTrackPick(next[Math.floor(Math.random() * next.length)]);
-                  setSlotKey((k) => k + 1);
-                }
+                const idx = PICK_CYCLE.indexOf(displayConcept);
+                setHeroConcept(PICK_CYCLE[(idx + 1) % PICK_CYCLE.length]);
               }}
-              aria-label="Selected concept"
+              aria-label={`${CONCEPT_LABEL[cycle.center]} 선택됨. 다음 길로 전환`}
               className="group inline-flex items-center justify-center gap-2 md:gap-4 lg:gap-5 shrink-0"
             >
               <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">[</span>
@@ -333,11 +347,7 @@ export default function Index() {
                 <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                   <div
                     key={`center-${slotKey}-${cycle.center}`}
-                    className={`inline-flex items-center justify-center whitespace-nowrap px-2 md:px-3 py-[0.14em] font-serif-kr text-accent-c leading-[1.08] -tracking-[0.02em] will-change-transform ${
-                      concept === "track"
-                        ? "text-[2rem] md:text-[3.35rem] lg:text-[4.2rem]"
-                        : "text-[2.35rem] md:text-[3.9rem] lg:text-[5rem]"
-                    } ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
+                    className={`inline-flex items-center justify-center whitespace-nowrap px-2 md:px-3 py-[0.14em] font-serif-kr text-accent-c leading-[1.08] text-[2.35rem] md:text-[3.9rem] lg:text-[5rem] will-change-transform ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
                   >
                     {CONCEPT_LABEL[cycle.center]}
                   </div>
@@ -347,38 +357,15 @@ export default function Index() {
               <span className="font-display text-6xl md:text-8xl lg:text-9xl text-white/90 leading-none -tracking-[0.02em] select-none shrink-0">]</span>
             </button>
 
-            <div
+            <button
+              type="button"
               key={`right-${slotKey}-${cycle.right}`}
-              aria-hidden="true"
-              className={`hidden md:flex w-[clamp(6rem,18vw,14rem)] items-center justify-start whitespace-nowrap font-serif-kr text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-opacity ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
+              onClick={() => setHeroConcept(cycle.right)}
+              aria-label={`${CONCEPT_LABEL[cycle.right]}로 전환`}
+              className={`flex w-[clamp(3.25rem,18vw,14rem)] items-center justify-start whitespace-nowrap font-serif-kr text-lg md:text-2xl lg:text-4xl leading-[1.2] text-white/35 transition-colors hover:text-white/70 focus-visible:outline-none focus-visible:text-white/80 ${slotDir === "r" ? "animate-slide-in-r" : "animate-slide-in-l"}`}
             >
               {CONCEPT_LABEL[cycle.right]}
-            </div>
-          </div>
-
-          {/* 컨셉 셀렉터 — 가는 가로선 위에 4개 라벨 */}
-          <div className="mt-10 md:mt-12 flex items-center gap-5 md:gap-8">
-            {CYCLE.map((c, i) => {
-              const active = concept === c;
-              return (
-                <div key={c} className="flex items-center gap-5 md:gap-8">
-                  <button
-                    onClick={() => setConcept(c)}
-                    className={`relative text-[10px] md:text-[11px] tracking-[0.28em] uppercase transition-all duration-500 ${
-                      active ? "text-accent-c" : "text-white/35 hover:text-white/70"
-                    }`}
-                  >
-                    <span className="font-sans-kr">{c === "track" ? "TRACK 052" : CONCEPT_LABEL[c]}</span>
-                    <span
-                      className={`absolute -bottom-2 left-0 h-px bg-accent-c transition-all duration-500 ${
-                        active ? "w-full opacity-100" : "w-0 opacity-0"
-                      }`}
-                    />
-                  </button>
-                  {i < CYCLE.length - 1 && <span className="w-1 h-1 rounded-full bg-white/20" />}
-                </div>
-              );
-            })}
+            </button>
           </div>
         </div>
 
