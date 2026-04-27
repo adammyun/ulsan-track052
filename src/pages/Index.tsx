@@ -128,9 +128,9 @@ const GUIDE = [
 function DayNightImg({ base, alt, isNight, className = "" }: { base: string; alt: string; isNight: boolean; className?: string }) {
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
-      <img src={`https://res.cloudinary.com/dkecbb2bf/image/upload/${base}-day.jpg`} alt={alt}
+      <img src={`/images/${base}-day.jpg`} alt={alt}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
-      <img src={`https://res.cloudinary.com/dkecbb2bf/image/upload/${base}-night.jpg`} alt={alt}
+      <img src={`/images/${base}-night.jpg`} alt={alt}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
     </div>
   );
