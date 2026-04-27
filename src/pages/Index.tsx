@@ -254,11 +254,10 @@ export default function Index() {
   const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
   const showJunggu = filter !== "namgu";
-  const displayConcept = concept === "track" ? trackPick : concept;
-  const cycle = useMemo(() => cycleAroundPick(displayConcept), [displayConcept]);
-  const setHeroConcept = (next: PickConcept) => {
+  const cycle = useMemo(() => cycleAround(concept), [concept]);
+  const setHeroConcept = (next: Concept) => {
     setConcept(next);
-    setTrackPick(next);
+    if (next !== "track") setTrackPick(next);
   };
 
   return (
@@ -316,7 +315,7 @@ export default function Index() {
           </g>
         </svg>
 
-        {/* 대괄호 위치 고정 — 좌우 요소 클릭으로 갓길/샛길/지름길 전환 */}
+        {/* 대괄호 위치 고정 — 좌우 요소 클릭으로 Track/갓길/샛길/지름길 전환 */}
         <div className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up">
           <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 w-full">
             <button
@@ -332,8 +331,8 @@ export default function Index() {
             <button
               type="button"
               onClick={() => {
-                const idx = PICK_CYCLE.indexOf(displayConcept);
-                setHeroConcept(PICK_CYCLE[(idx + 1) % PICK_CYCLE.length]);
+                const idx = CYCLE.indexOf(concept);
+                setHeroConcept(CYCLE[(idx + 1) % CYCLE.length]);
               }}
               aria-label={`${CONCEPT_LABEL[cycle.center]} 선택됨. 다음 길로 전환`}
               className="group inline-flex items-center justify-center gap-2 md:gap-4 lg:gap-5 shrink-0"
@@ -342,7 +341,7 @@ export default function Index() {
 
               <div
                 className="relative flex items-center justify-center overflow-hidden align-middle shrink-0"
-                style={{ width: "clamp(13rem, 40vw, 28rem)", height: "clamp(5.25rem, 10vw, 8.5rem)" }}
+                style={{ width: "clamp(14.5rem, 42vw, 30rem)", height: "clamp(5.25rem, 10vw, 8.5rem)" }}
               >
                 <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                   <div
