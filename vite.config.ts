@@ -5,7 +5,6 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/styled-storyboard/',   // ← 이 줄만 추가!
   server: {
     host: "::",
     port: 8080,
