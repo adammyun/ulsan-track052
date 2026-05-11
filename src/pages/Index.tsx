@@ -312,15 +312,20 @@ export default function Index() {
     if (next !== "track") setTrackPick(next);
   };
 
-  // Hero parallax — slow zoom + downward drift while scrolling past hero
+  // Hero parallax — useSpring 으로 보간하여 끊김 없이 부드럽게.
+  // motion value 만 사용하므로 스크롤 시 React 리렌더가 발생하지 않음.
   const heroRef = useRef<HTMLElement | null>(null);
+  const reduceMotion = useReducedMotion();
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroScale = useTransform(heroProgress, [0, 1], [1, 1.18]);
-  const heroY = useTransform(heroProgress, [0, 1], ["0%", "12%"]);
-  const heroOverlayOpacity = useTransform(heroProgress, [0, 1], [1, 0.6]);
+  const heroScaleRaw = useTransform(heroProgress, [0, 1], [1, 1.18]);
+  const heroYRaw = useTransform(heroProgress, [0, 1], ["0%", "12%"]);
+  const heroOverlayRaw = useTransform(heroProgress, [0, 1], [1, 0.6]);
+  const heroScale = useSpring(heroScaleRaw, PARALLAX_SPRING);
+  const heroY = useSpring(heroYRaw, PARALLAX_SPRING) as unknown as MotionValue<string>;
+  const heroOverlayOpacity = useSpring(heroOverlayRaw, PARALLAX_SPRING);
 
   return (
     <main className="bg-paper text-ink min-h-screen">
