@@ -548,7 +548,7 @@ export default function Index() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Guide — 페이지 넘김 */}
       <section id="guide" className="px-6 md:px-14 py-20 bg-guide transition-colors duration-700">
