@@ -7,6 +7,7 @@ import {
   useTransform,
   useReducedMotion,
   AnimatePresence,
+  useMotionValue,
   type Variants,
   type MotionValue,
 } from "framer-motion";
@@ -266,6 +267,29 @@ export default function Index() {
   const [slotKey, setSlotKey] = useState(0); // 같은 컨셉 재선택 시에도 재실행
   const prevConceptRef = useRef<Concept>(concept);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Framer Motion에서 부드러움(0.1초의 지연 느낌)을 내기 위한 스프링 최적화 값
+  const smoothConfig = { stiffness: 40, damping: 30, mass: 0.1 };
+  const springX = useSpring(mouseX, smoothConfig);
+  const springY = useSpring(mouseY, smoothConfig);
+
+  // 이동 범위 설정 (배경은 마우스 반대로 40px 이동)
+  const moveBgX = useTransform(springX, [-0.5, 0.5], [40, -40]); 
+  const moveBgY = useTransform(springY, [-0.5, 0.5], [40, -40]);
+  
+  // 텍스트는 마우스 방향으로 입체감 있게 20px 이동 (배경과 깊이감 분리)
+  const moveTextX = useTransform(springX, [-0.5, 0.5], [-20, 20]); 
+  const moveTextY = useTransform(springY, [-0.5, 0.5], [-20, 20]);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    const { innerWidth, innerHeight } = window;
+    // 화면 중앙을 기준으로 -0.5 ~ 0.5 사이의 비율로 계산
+    mouseX.set(clientX / innerWidth - 0.5);
+    mouseY.set(clientY / innerHeight - 0.5);
+  };
 
   // 컨셉/픽 변경 시 슬라이드 방향 결정
   useEffect(() => {
@@ -366,11 +390,11 @@ export default function Index() {
       </nav>
 
       {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
-      <section ref={heroRef} id="hero" className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
+      <section ref={heroRef} id="hero" onMouseMove={handleMouseMove} className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
         {/* 자연 배경 (낮/밤) — 패럴랙스 (스프링 보간) */}
         <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={reduceMotion ? undefined : { scale: heroScale, y: heroY }}
+         className="absolute inset-0 will-change-transform scale-110" // scale-110을 추가해 이미지가 잘리지 않게 여유를 줍니다
+          style={reduceMotion ? undefined : { scale: heroScale, x: moveBgX, y: moveBgY }} // y: heroY 대신 마우스 움직임 적용
         >
           <img src="/images/hero-nature-day.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-day.jpg"; }}
@@ -405,7 +429,12 @@ export default function Index() {
         </svg>
 
         {/* 대괄호 위치 고정 — 좌우 요소 클릭으로 Track/갓길/샛길/지름길 전환 */}
-        <div className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up">
+        <motion.div 
+          style={{ x: moveTextX, y: moveTextY }} // 👈 텍스트용 모션 적용
+          className="relative z-10 flex flex-col items-center w-full max-w-6xl animate-fade-up"
+        >
+          {/* ... 내부 버튼들 코드는 그대로 유지 ... */}
+        </motion.div> {/* 👈 닫는 태그도 motion.div로 변경 */}
           <div className="flex items-center justify-center gap-3 md:gap-6 lg:gap-8 w-full">
             <button
               type="button"
