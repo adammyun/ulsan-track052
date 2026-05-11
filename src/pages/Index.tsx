@@ -660,7 +660,7 @@ export default function Index() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className={`px-6 md:px-14 pt-14 pb-8 transition-colors duration-700 ${isNight ? "bg-[#030407]" : "bg-[#0e0d0b]"}`}>
