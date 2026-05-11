@@ -446,7 +446,7 @@ export default function Index() {
             <a href="#" className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">지도에서 보기</a>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Archive */}
       <section id="archive" className="px-6 md:px-14 py-24 bg-card-bg transition-colors duration-700">
