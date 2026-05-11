@@ -1,5 +1,46 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform, type Variants } from "framer-motion";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  motion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useReducedMotion,
+  type Variants,
+  type MotionValue,
+} from "framer-motion";
+
+// 부드러운 패럴랙스용 스프링 프리셋 (가볍고 컨트롤 잘 됨)
+const PARALLAX_SPRING = { stiffness: 80, damping: 20, mass: 0.4, restDelta: 0.001 } as const;
+
+// 섹션 단위 미세 패럴랙스 — 자체 ref + useScroll 로 윈도우 스크롤 리스너를 GPU 트랜스폼으로만 처리.
+// React state 를 거치지 않으므로 리렌더가 발생하지 않음.
+function ParallaxLayer({
+  children,
+  offset = 60,
+  className,
+}: {
+  children: ReactNode;
+  offset?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const raw = useTransform(scrollYProgress, [0, 1], [offset, -offset]);
+  const y = useSpring(raw, PARALLAX_SPRING);
+  return (
+    <motion.div
+      ref={ref}
+      style={reduce ? undefined : { y, willChange: "transform" }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 const sectionVariants: Variants = {
   hidden: { opacity: 0, y: 48 },
@@ -271,15 +312,20 @@ export default function Index() {
     if (next !== "track") setTrackPick(next);
   };
 
-  // Hero parallax — slow zoom + downward drift while scrolling past hero
+  // Hero parallax — useSpring 으로 보간하여 끊김 없이 부드럽게.
+  // motion value 만 사용하므로 스크롤 시 React 리렌더가 발생하지 않음.
   const heroRef = useRef<HTMLElement | null>(null);
+  const reduceMotion = useReducedMotion();
   const { scrollYProgress: heroProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
   });
-  const heroScale = useTransform(heroProgress, [0, 1], [1, 1.18]);
-  const heroY = useTransform(heroProgress, [0, 1], ["0%", "12%"]);
-  const heroOverlayOpacity = useTransform(heroProgress, [0, 1], [1, 0.6]);
+  const heroScaleRaw = useTransform(heroProgress, [0, 1], [1, 1.18]);
+  const heroYRaw = useTransform(heroProgress, [0, 1], ["0%", "12%"]);
+  const heroOverlayRaw = useTransform(heroProgress, [0, 1], [1, 0.6]);
+  const heroScale = useSpring(heroScaleRaw, PARALLAX_SPRING);
+  const heroY = useSpring(heroYRaw, PARALLAX_SPRING) as unknown as MotionValue<string>;
+  const heroOverlayOpacity = useSpring(heroOverlayRaw, PARALLAX_SPRING);
 
   return (
     <main className="bg-paper text-ink min-h-screen">
@@ -309,8 +355,11 @@ export default function Index() {
 
       {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
       <section ref={heroRef} id="hero" className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
-        {/* 자연 배경 (낮/밤) — 패럴랙스 */}
-        <motion.div className="absolute inset-0 will-change-transform" style={{ scale: heroScale, y: heroY }}>
+        {/* 자연 배경 (낮/밤) — 패럴랙스 (스프링 보간) */}
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={reduceMotion ? undefined : { scale: heroScale, y: heroY }}
+        >
           <img src="/images/hero-nature-day.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-day.jpg"; }}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-0" : "opacity-100"}`} />
@@ -318,7 +367,11 @@ export default function Index() {
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-night.jpg"; }}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-100" : "opacity-0"}`} />
         </motion.div>
-        <motion.div style={{ opacity: heroOverlayOpacity }} className="absolute inset-0 pointer-events-none" aria-hidden />
+        <motion.div
+          style={reduceMotion ? undefined : { opacity: heroOverlayOpacity }}
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden
+        />
         {/* 더 어둡게 깔리는 그라디언트 — 텍스트 가독성 강화, 자연 분위기 유지 */}
         <div className="absolute inset-0 transition-colors duration-1000"
           style={{ background: isNight
@@ -411,6 +464,7 @@ export default function Index() {
 
       {/* Editor's Pick */}
       <motion.section id="pick" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-24 bg-paper transition-colors duration-700">
+        <ParallaxLayer offset={36}>
         <div className="flex items-baseline justify-between mb-12">
           <p className="reveal text-[9px] tracking-[0.3em] text-ink-light flex items-center gap-3.5">
             EDITOR'S PICK<span className="block w-7 h-px bg-accent-c" />
@@ -446,10 +500,12 @@ export default function Index() {
             <a href="#" className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">지도에서 보기</a>
           </div>
         </div>
+        </ParallaxLayer>
       </motion.section>
 
       {/* Archive */}
       <motion.section id="archive" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-24 bg-card-bg transition-colors duration-700">
+        <ParallaxLayer offset={42}>
         <p className="reveal text-[9px] tracking-[0.3em] text-ink-light flex items-center gap-3.5 mb-6">
           ARCHIVE<span className="block w-7 h-px bg-accent-c" />
         </p>
@@ -548,10 +604,12 @@ export default function Index() {
             </div>
           ))}
         </div>
+        </ParallaxLayer>
       </motion.section>
 
       {/* Guide — 페이지 넘김 */}
       <motion.section id="guide" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-20 bg-guide transition-colors duration-700">
+        <ParallaxLayer offset={32}>
         <div className="flex items-center justify-between mb-6">
           <p className="reveal text-[9px] tracking-[0.3em] text-white/30 flex items-center gap-3.5">
             WALKING GUIDE<span className="block w-7 h-px bg-accent-c" />
@@ -639,10 +697,12 @@ export default function Index() {
             다음 장 →
           </button>
         </div>
+        </ParallaxLayer>
       </motion.section>
 
       {/* Moodboard */}
       <motion.section id="moodboard" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-24 bg-paper transition-colors duration-700">
+        <ParallaxLayer offset={48}>
         <p className="reveal text-[9px] tracking-[0.3em] text-ink-light flex items-center gap-3.5 mb-6">
           PHOTO MOODBOARD<span className="block w-7 h-px bg-accent-c" />
         </p>
@@ -660,6 +720,7 @@ export default function Index() {
             </div>
           ))}
         </div>
+        </ParallaxLayer>
       </motion.section>
 
       {/* Footer */}
