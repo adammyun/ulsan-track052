@@ -639,7 +639,7 @@ export default function Index() {
             다음 장 →
           </button>
         </div>
-      </section>
+      </motion.section>
 
       {/* Moodboard */}
       <section id="moodboard" className="px-6 md:px-14 py-24 bg-paper transition-colors duration-700">
