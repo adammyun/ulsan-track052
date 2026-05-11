@@ -551,7 +551,7 @@ export default function Index() {
       </motion.section>
 
       {/* Guide — 페이지 넘김 */}
-      <section id="guide" className="px-6 md:px-14 py-20 bg-guide transition-colors duration-700">
+      <motion.section id="guide" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-20 bg-guide transition-colors duration-700">
         <div className="flex items-center justify-between mb-6">
           <p className="reveal text-[9px] tracking-[0.3em] text-white/30 flex items-center gap-3.5">
             WALKING GUIDE<span className="block w-7 h-px bg-accent-c" />
