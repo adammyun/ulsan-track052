@@ -515,9 +515,17 @@ export default function Index() {
           </span>
         </div>
         <div key={pickConcept} className="grid md:grid-cols-[1.25fr_1fr] gap-10 md:gap-14 items-start animate-fade-up">
-          <div className="reveal group relative aspect-[4/3] overflow-hidden rounded-sm bg-[hsl(var(--ink-faint))]">
+          <button
+            type="button"
+            onClick={() => setOpenId(pick.id)}
+            className="reveal group relative aspect-[4/3] overflow-hidden rounded-sm bg-[hsl(var(--ink-faint))] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))]"
+            aria-label={`${pick.title.join(" ")} 자세히 보기`}
+          >
             <DayNightImg base={pick.img} alt={pick.title.join(" ")} isNight={isNight} className="transition-transform duration-700 group-hover:scale-[1.04]" />
-          </div>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="font-serif-kr italic text-sm text-white">자세히 보기</span>
+            </div>
+          </button>
           <div className="reveal" style={{ transitionDelay: "120ms" }}>
             <p className="text-[9px] tracking-[0.2em] text-accent-c mb-3.5">{pick.type}</p>
             <h2 className="font-serif-kr text-2xl md:text-[28px] leading-[1.35] mb-2 text-ink">
