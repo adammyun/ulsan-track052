@@ -244,8 +244,8 @@ function Dots({ value, label, tone = "ink", size = "sm" }: { value: number; labe
 
 // ── 메인 ──────────────────────────────────────────────────────────
 export default function Index() {
-  // 아카이브 상세는 /archive/:id 페이지로 이동합니다.
-  const navigate = useNavigate();
+  // 아카이브 상세는 모달로 표시합니다.
+  const [openId, setOpenId] = useState<string | null>(null);
   const [intro, setIntro] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [isNight, setIsNight] = useState(false);
