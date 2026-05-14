@@ -574,7 +574,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {namguList.map((it, i) => (
-                <article key={it.img} onClick={() => navigate(`/archive/${it.img}`)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -607,7 +607,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {jungguList.map((it, i) => (
-                <article key={it.img} onClick={() => navigate(`/archive/${it.img}`)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
