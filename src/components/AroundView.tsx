@@ -1,0 +1,324 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Viewer } from "@photo-sphere-viewer/core";
+import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
+import "@photo-sphere-viewer/core/index.css";
+import "@photo-sphere-viewer/markers-plugin/index.css";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { X, MessageCircle } from "lucide-react";
+
+interface AroundComment {
+  id: string;
+  path_id: string;
+  user_name: string;
+  avatar_url: string | null;
+  pitch: number;
+  yaw: number;
+  content: string;
+  created_at: string;
+}
+
+interface Props {
+  pathId: string;
+  panoramaUrl?: string;
+  caption?: string;
+}
+
+const PLACEHOLDER_PANO =
+  "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
+
+export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<Viewer | null>(null);
+  const markersRef = useRef<MarkersPlugin | null>(null);
+
+  const [comments, setComments] = useState<AroundComment[]>([]);
+  const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
+  const [draft, setDraft] = useState<{ pitch: number; yaw: number } | null>(null);
+  const [name, setName] = useState("");
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch comments
+  const loadComments = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("around_view_comments")
+      .select("*")
+      .eq("path_id", pathId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setComments((data ?? []) as AroundComment[]);
+  }, [pathId]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
+
+  // Init viewer
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const viewer = new Viewer({
+      container: containerRef.current,
+      panorama: panoramaUrl || PLACEHOLDER_PANO,
+      navbar: false,
+      defaultZoomLvl: 0,
+      mousewheel: false,
+      plugins: [[MarkersPlugin, {}]],
+    });
+    viewerRef.current = viewer;
+    markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
+
+    const onClick = (e: { data: { rightclick: boolean; pitch: number; yaw: number; target?: unknown } }) => {
+      if (e.data.rightclick) return;
+      // Open new comment composer for empty space
+      setActiveComment(null);
+      setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
+    };
+    viewer.addEventListener("click", onClick as never);
+
+    const onSelect = ({ marker }: { marker: Marker }) => {
+      const c = (marker.config.data as { comment?: AroundComment } | undefined)?.comment;
+      if (c) {
+        setDraft(null);
+        setActiveComment(c);
+      }
+    };
+    markersRef.current.addEventListener("select-marker", onSelect as never);
+
+    return () => {
+      viewer.destroy();
+      viewerRef.current = null;
+      markersRef.current = null;
+    };
+  }, [panoramaUrl]);
+
+  // Sync markers
+  useEffect(() => {
+    const plugin = markersRef.current;
+    if (!plugin) return;
+    plugin.setMarkers(
+      comments.map((c) => ({
+        id: c.id,
+        position: { pitch: c.pitch, yaw: c.yaw },
+        html: `<div class="av-dot"><span class="av-dot-core"></span><span class="av-dot-ring"></span></div>`,
+        anchor: "center center",
+        tooltip: {
+          content: `<div class="flex items-center gap-2">
+            ${
+              c.avatar_url
+                ? `<img src="${c.avatar_url}" alt="" class="w-6 h-6 rounded-full object-cover" />`
+                : `<div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px] text-white">${c.user_name.charAt(0)}</div>`
+            }
+            <span class="text-xs text-white/90">${escapeHtml(c.user_name)}</span>
+          </div>`,
+          className: "av-tooltip",
+        },
+        data: { comment: c },
+      })),
+    );
+  }, [comments]);
+
+  const submitComment = async () => {
+    if (!draft || !text.trim()) return;
+    setSubmitting(true);
+    const payload = {
+      path_id: pathId,
+      user_name: name.trim() || "익명의 여행자",
+      avatar_url: null,
+      pitch: draft.pitch,
+      yaw: draft.yaw,
+      content: text.trim().slice(0, 280),
+    };
+    const { data, error } = await supabase
+      .from("around_view_comments")
+      .insert(payload)
+      .select()
+      .single();
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "코멘트 저장 실패", description: error.message, variant: "destructive" });
+      return;
+    }
+    setComments((prev) => [...prev, data as AroundComment]);
+    setDraft(null);
+    setText("");
+    toast({ title: "코멘트가 추가됐어요" });
+  };
+
+  return (
+    <section className="my-16">
+      <p className="text-[10px] tracking-[0.3em] text-ink-light flex items-center gap-3 mb-5">
+        AROUND VIEW <span className="block w-7 h-px bg-accent" />
+      </p>
+      <p className="text-[12px] text-ink-mid mb-4 leading-relaxed">
+        파노라마를 드래그해 둘러보세요. 빈 공간을 클릭하면 그 자리에 짧은 이야기를 남길 수 있어요.
+      </p>
+
+      <div className="relative rounded-sm overflow-hidden bg-black aspect-[16/9] md:aspect-[2/1] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
+        <div ref={containerRef} className="absolute inset-0" />
+
+        {/* Empty state hint */}
+        {comments.length === 0 && (
+          <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
+            <MessageCircle className="w-3 h-3" /> 아직 남겨진 이야기가 없어요
+          </div>
+        )}
+
+        {/* Speech bubble for active comment */}
+        <AnimatePresence>
+          {activeComment && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute left-1/2 bottom-6 -translate-x-1/2 max-w-[88%] md:max-w-md z-20"
+            >
+              <div className="relative bg-white/95 backdrop-blur text-ink rounded-2xl px-5 py-4 shadow-2xl">
+                <button
+                  onClick={() => setActiveComment(null)}
+                  className="absolute top-2 right-2 text-ink-light hover:text-ink"
+                  aria-label="닫기"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="w-7 h-7">
+                    {activeComment.avatar_url && <AvatarImage src={activeComment.avatar_url} />}
+                    <AvatarFallback className="text-[10px]">
+                      {activeComment.user_name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-[11px] tracking-wider text-ink-mid">
+                    {activeComment.user_name}
+                  </span>
+                </div>
+                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/90">
+                  {activeComment.content}
+                </p>
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 rotate-45" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* New comment composer */}
+        <AnimatePresence>
+          {draft && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.25 }}
+              className="absolute inset-x-3 bottom-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px] z-20"
+            >
+              <div className="bg-paper/95 backdrop-blur rounded-sm p-4 shadow-2xl border border-faint">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] tracking-[0.3em] text-ink-light">
+                    NEW · {draft.pitch.toFixed(2)} / {draft.yaw.toFixed(2)}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setDraft(null);
+                      setText("");
+                    }}
+                    className="text-ink-light hover:text-ink"
+                    aria-label="취소"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value.slice(0, 60))}
+                  placeholder="이름 (선택)"
+                  className="mb-2 h-8 text-[12px] bg-transparent"
+                />
+                <Textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, 280))}
+                  placeholder="이 자리에 어떤 이야기를 남길까요?"
+                  className="text-[13px] min-h-[72px] bg-transparent font-serif-kr"
+                  autoFocus
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] text-ink-light tabular-nums">
+                    {text.length}/280
+                  </span>
+                  <Button
+                    size="sm"
+                    disabled={!text.trim() || submitting}
+                    onClick={submitComment}
+                    className="h-7 text-[11px] tracking-[0.2em] uppercase"
+                  >
+                    {submitting ? "남기는 중…" : "남기기"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {caption && (
+        <p className="mt-3 text-[11px] text-ink-light italic">{caption}</p>
+      )}
+
+      {/* Component-scoped styles for marker dots & tooltip */}
+      <style>{`
+        .av-dot {
+          position: relative;
+          width: 14px;
+          height: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+        .av-dot-core {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 9999px;
+          background: hsl(var(--accent));
+          box-shadow: 0 0 12px hsl(var(--accent) / 0.9), 0 0 2px rgba(255,255,255,0.9);
+        }
+        .av-dot-ring {
+          position: absolute;
+          width: 22px;
+          height: 22px;
+          border-radius: 9999px;
+          border: 1px solid hsl(var(--accent) / 0.6);
+          opacity: 0.7;
+          animation: avPulse 2.4s ease-out infinite;
+        }
+        @keyframes avPulse {
+          0% { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        .av-tooltip {
+          background: rgba(15, 15, 18, 0.92) !important;
+          color: #fff !important;
+          border-radius: 8px !important;
+          padding: 6px 10px !important;
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255,255,255,0.08) !important;
+        }
+      `}</style>
+    </section>
+  );
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string),
+  );
+}

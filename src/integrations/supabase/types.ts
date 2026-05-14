@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      around_view_comments: {
+        Row: {
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          path_id: string
+          pitch: number
+          user_id: string | null
+          user_name: string
+          yaw: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          path_id: string
+          pitch: number
+          user_id?: string | null
+          user_name?: string
+          yaw: number
+        }
+        Update: {
+          avatar_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          path_id?: string
+          pitch?: number
+          user_id?: string | null
+          user_name?: string
+          yaw?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "around_view_comments_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       paths: {
         Row: {
           content: Json

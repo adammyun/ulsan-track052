@@ -4,6 +4,7 @@ import { motion, type Variants } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ArrivalSection from "@/components/ArrivalSection";
+import AroundView from "@/components/AroundView";
 
 interface RouteStep {
   step: string;
@@ -190,6 +191,9 @@ export default function ArchiveDetail() {
                 </ul>
               </motion.section>
             )}
+
+            {/* Around View */}
+            <AroundView pathId={data.id} caption={`${data.name} · 360° around view (placeholder)`} />
 
             {/* Arrival */}
             <motion.div
