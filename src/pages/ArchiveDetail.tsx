@@ -204,9 +204,8 @@ export default function ArchiveDetail() {
             >
               <ArrivalSection
                 target={{ lat: data.latitude, lon: data.longitude }}
-                goodsUrl={data.goods_url}
-                goodsType={data.goods_type}
                 placeName={data.name}
+                coverImage={data.cover_image}
               />
             </motion.div>
           </article>

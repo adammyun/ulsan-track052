@@ -105,10 +105,10 @@ export default function ArchiveDetailModal({ id, onClose }: Props) {
           <motion.div
             role="dialog"
             aria-modal="true"
-            initial={{ opacity: 0, y: 32, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.985 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 w-full md:w-[min(960px,92vw)] h-[100dvh] md:h-[min(90vh,920px)] md:my-auto md:rounded-md overflow-hidden bg-paper text-ink shadow-2xl flex flex-col"
           >
             {/* Header */}
@@ -267,9 +267,8 @@ export default function ArchiveDetailModal({ id, onClose }: Props) {
                     >
                       <ArrivalSection
                         target={{ lat: data.latitude, lon: data.longitude }}
-                        goodsUrl={data.goods_url}
-                        goodsType={data.goods_type}
                         placeName={data.name}
+                        coverImage={data.cover_image}
                         forceUnlocked={forceUnlocked}
                       />
                     </motion.div>

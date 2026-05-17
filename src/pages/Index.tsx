@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ArchiveDetailModal from "@/components/ArchiveDetailModal";
+import HeaderLocation from "@/components/HeaderLocation";
 import {
   motion,
   useScroll,
@@ -378,11 +379,14 @@ export default function Index() {
             <li key={h}><a href={h} className={`text-[10px] tracking-[0.16em] transition-colors hover:text-accent-c ${scrolled ? "text-ink-light" : "text-white/55"}`}>{l}</a></li>
           ))}
         </ul>
-        <button onClick={() => setIsNight((v) => !v)}
-          className={`flex items-center gap-1.5 text-[9px] tracking-[0.14em] px-3 py-1.5 rounded-full border transition-all ${scrolled ? "border-[hsl(var(--accent))] text-accent-c" : "border-white/30 text-white/60"}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          {isNight ? "밤" : "낮"}
-        </button>
+        <div className="flex flex-col items-end gap-0.5">
+          <button onClick={() => setIsNight((v) => !v)}
+            className={`flex items-center gap-1.5 text-[9px] tracking-[0.14em] px-3 py-1.5 rounded-full border transition-all ${scrolled ? "border-[hsl(var(--accent))] text-accent-c" : "border-white/30 text-white/60"}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+            {isNight ? "밤" : "낮"}
+          </button>
+          <HeaderLocation scrolled={scrolled} />
+        </div>
       </nav>
 
       {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
@@ -669,28 +673,28 @@ export default function Index() {
         </div>
 
         <div className="relative">
-          <article key={`g-${guidePage}`} className="animate-fade-up">
+          <article key={`g-${guidePage}`} className="animate-fade-up min-h-[360px] md:min-h-[340px] flex">
             {guidePage === 0 ? (
-              <div className="grid md:grid-cols-[1fr_1.1fr] gap-8 md:gap-14 items-center">
+              <div className="grid md:grid-cols-[0.85fr_1.6fr] gap-8 md:gap-14 items-center w-full">
                 <div>
                   <p className="font-display italic text-accent-c text-2xl md:text-4xl mb-5 opacity-80">— Prologue</p>
-                  <h2 className="font-serif-kr text-3xl md:text-5xl lg:text-[54px] leading-[1.3] text-white/90 mb-2">
+                  <h2 className="font-serif-kr text-3xl md:text-[40px] leading-[1.3] text-white/90">
                     {GUIDE_INTRO.title}<br/>
                     <span className="text-accent-c">{GUIDE_INTRO.subtitle}</span>
                   </h2>
                 </div>
-                <div>
-                  <p className="font-serif-kr italic text-lg md:text-xl leading-[1.95] text-white/65">
+                <div className="space-y-5">
+                  <p className="font-serif-kr text-lg md:text-2xl leading-[1.85] text-white/75">
                     {GUIDE_INTRO.body}
                   </p>
-                  <div className="mt-6 flex items-center gap-3 text-[10px] tracking-[0.2em] text-white/35">
+                  <div className="flex items-center gap-3 text-[10px] tracking-[0.2em] text-white/35 border-l border-white/15 pl-5">
                     <span className="block w-7 h-px bg-accent-c" />
                     TRACK : 052 · ULSAN
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="grid md:grid-cols-[0.85fr_1.6fr] gap-8 md:gap-14 items-center">
+              <div className="grid md:grid-cols-[0.85fr_1.6fr] gap-8 md:gap-14 items-center w-full">
                 <div>
                   <div className="font-display text-7xl md:text-[140px] text-accent-c opacity-30 leading-none mb-4">
                     {GUIDE[guidePage - 1].n}

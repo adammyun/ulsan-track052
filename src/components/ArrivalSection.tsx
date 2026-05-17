@@ -1,45 +1,134 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Lock, MapPin, Download, ShieldAlert } from "lucide-react";
+import { MapPin, ShieldAlert, Sun, Moon, Ticket } from "lucide-react";
 import { useArrival, ARRIVAL_RADIUS } from "@/hooks/useArrival";
 import { formatDistance } from "@/lib/geo";
 
 interface Props {
   target: { lat: number; lon: number };
-  goodsUrl: string | null;
-  goodsType: string;
   placeName: string;
+  coverImage?: string;
   /** Developer bypass — when true, treat as arrived without GPS check. */
   forceUnlocked?: boolean;
 }
 
-export default function ArrivalSection({ target, goodsUrl, goodsType, placeName, forceUnlocked = false }: Props) {
+type StampKind = "day" | "night";
+interface StampMap {
+  day?: string;  // ISO time
+  night?: string;
+}
+
+const stampKey = (placeName: string) => `track052:stamps:${placeName}`;
+
+function currentStampKind(d = new Date()): StampKind {
+  const h = d.getHours();
+  // 주간 06:00~17:59, 야간 18:00~05:59
+  return h >= 6 && h < 18 ? "day" : "night";
+}
+
+function formatStampTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString("ko-KR", {
+    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+}
+
+function StampSlot({
+  kind, stampedAt,
+}: { kind: StampKind; stampedAt?: string }) {
+  const stamped = !!stampedAt;
+  const Icon = kind === "day" ? Sun : Moon;
+  return (
+    <div className="relative flex-1 rounded-sm border border-dashed border-faint bg-paper/60 p-4 flex flex-col items-center justify-center gap-2 aspect-square overflow-hidden">
+      <AnimatePresence>
+        {stamped ? (
+          <motion.div
+            key="stamp"
+            initial={{ scale: 1.8, opacity: 0, rotate: -18 }}
+            animate={{ scale: 1, opacity: 1, rotate: -8 }}
+            transition={{ type: "spring", stiffness: 220, damping: 14 }}
+            className="absolute inset-0 flex flex-col items-center justify-center"
+          >
+            <div className="border-2 border-accent-c/80 rounded-full px-4 py-3 flex flex-col items-center gap-1 text-accent-c rotate-[-6deg]">
+              <Icon className="w-6 h-6" strokeWidth={1.6} />
+              <p className="text-[9px] tracking-[0.3em] uppercase">{kind === "day" ? "Day" : "Night"}</p>
+            </div>
+            <p className="absolute bottom-2 text-[9px] tracking-wider text-ink-light tabular-nums">
+              {formatStampTime(stampedAt!)}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center gap-1.5 text-ink-light/60"
+          >
+            <Icon className="w-5 h-5" strokeWidth={1.4} />
+            <p className="text-[9px] tracking-[0.3em] uppercase">{kind === "day" ? "Day" : "Night"}</p>
+            <p className="text-[9px] text-ink-light/50">미수집</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function ArrivalSection({
+  target, placeName, coverImage, forceUnlocked = false,
+}: Props) {
   const { status, distance, arrived: gpsArrived, start } = useArrival(target);
   const arrived = gpsArrived || forceUnlocked;
   const firedRef = useRef(false);
 
+  const [stamps, setStamps] = useState<StampMap>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(stampKey(placeName)) || "{}"); }
+    catch { return {}; }
+  });
+
+  // 새 장소로 모달이 바뀌면 다시 불러옴
   useEffect(() => {
-    if (arrived && !firedRef.current) {
-      firedRef.current = true;
-      const burst = (origin: { x: number; y: number }) =>
-        confetti({ particleCount: 90, spread: 75, origin, scalar: 0.9, ticks: 200 });
-      burst({ x: 0.25, y: 0.6 });
-      setTimeout(() => burst({ x: 0.75, y: 0.6 }), 180);
-      setTimeout(() => burst({ x: 0.5, y: 0.4 }), 360);
-    }
-  }, [arrived]);
+    if (typeof window === "undefined") return;
+    try { setStamps(JSON.parse(localStorage.getItem(stampKey(placeName)) || "{}")); }
+    catch { setStamps({}); }
+    firedRef.current = false;
+  }, [placeName]);
+
+  // 도착하면 현재 시간대 스탬프를 찍고 컨페티!
+  useEffect(() => {
+    if (!arrived || firedRef.current) return;
+    firedRef.current = true;
+
+    const kind = currentStampKind();
+    setStamps((prev) => {
+      if (prev[kind]) return prev;
+      const next = { ...prev, [kind]: new Date().toISOString() };
+      try { localStorage.setItem(stampKey(placeName), JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    const burst = (origin: { x: number; y: number }) =>
+      confetti({ particleCount: 90, spread: 75, origin, scalar: 0.9, ticks: 200, zIndex: 9999 });
+    burst({ x: 0.25, y: 0.6 });
+    setTimeout(() => burst({ x: 0.75, y: 0.6 }), 180);
+    setTimeout(() => burst({ x: 0.5, y: 0.4 }), 360);
+  }, [arrived, placeName]);
 
   const insecure = status === "insecure";
+  const todayKind = useMemo(() => currentStampKind(), [arrived]);
+  const collectedBoth = !!stamps.day && !!stamps.night;
 
   return (
     <section className="border-t border-faint pt-12 mt-16">
       <p className="text-[10px] tracking-[0.3em] text-ink-light flex items-center gap-3 mb-4">
         ARRIVAL <span className="block w-7 h-px bg-accent-c" />
       </p>
-      <h3 className="font-serif-kr text-2xl md:text-3xl text-ink mb-2">도착 확인 및 굿즈 받기</h3>
+      <h3 className="font-serif-kr text-2xl md:text-3xl text-ink mb-2">방문 기념 티켓 & 스탬프</h3>
       <p className="text-[13px] text-ink-mid mb-6">
-        목표 좌표 반경 {ARRIVAL_RADIUS}m 안에 들어오면 디지털 굿즈가 해금됩니다.
+        목표 좌표 반경 {ARRIVAL_RADIUS}m 안에 들어오면 도착이 인증되고, 그 시간대의 스탬프가 티켓에 찍혀요.
+        낮과 밤, 두 개의 스탬프를 모두 모아보세요.
       </p>
 
       {!window.isSecureContext && (
@@ -51,60 +140,52 @@ export default function ArrivalSection({ target, goodsUrl, goodsType, placeName,
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Left: status / action */}
-        <div className="flex-1 w-full">
-          <div className="rounded-sm border border-faint bg-paper p-6">
-            <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink-light mb-3">
-              <MapPin className="w-3 h-3" />
-              <span>TARGET · {target.lat.toFixed(4)}, {target.lon.toFixed(4)}</span>
-            </div>
+      {/* GPS 상태 패널 */}
+      <div className="rounded-sm border border-faint bg-paper p-6 mb-8">
+        <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink-light mb-3">
+          <MapPin className="w-3 h-3" />
+          <span>TARGET · {target.lat.toFixed(4)}, {target.lon.toFixed(4)}</span>
+        </div>
 
-            {arrived ? (
-              <p className="font-serif-kr text-[18px] text-ink leading-relaxed">
-                {forceUnlocked && status !== "arrived"
-                  ? "개발자 모드: GPS를 우회해 굿즈가 해금되었어요."
-                  : "도착을 확인했어요. 오른쪽에서 굿즈를 받아보세요."}
-              </p>
-            ) : (
+        {arrived ? (
+          <p className="font-serif-kr text-[18px] text-ink leading-relaxed">
+            {forceUnlocked && status !== "arrived"
+              ? "개발자 모드: GPS를 우회해 티켓이 발급되었어요."
+              : "도착을 확인했어요. 아래 티켓에 스탬프가 찍혔습니다."}
+          </p>
+        ) : (
+          <>
+            {status === "idle" && (
               <>
-                {status === "idle" && (
-                  <>
-                    <p className="font-serif-kr text-[17px] text-ink mb-5 leading-relaxed">
-                      지금 {placeName}에 도착하셨다면 위치를 인증하고 굿즈를 받아보세요.
-                    </p>
-                    <button
-                      onClick={start}
-                      disabled={insecure}
-                      className="text-[11px] tracking-[0.2em] uppercase px-5 py-2.5 rounded-full border border-ink text-ink hover:bg-ink hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      위치 확인하기
-                    </button>
-                  </>
+                <p className="font-serif-kr text-[17px] text-ink mb-5 leading-relaxed">
+                  지금 {placeName}에 도착하셨다면 위치를 인증하고 기념 티켓을 받아보세요.
+                </p>
+                <button
+                  onClick={start}
+                  disabled={insecure}
+                  className="text-[11px] tracking-[0.2em] uppercase px-5 py-2.5 rounded-full border border-ink text-ink hover:bg-ink hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  위치 확인하기
+                </button>
+              </>
+            )}
+            {(status === "requesting" || status === "tracking") && (
+              <>
+                <p className="font-serif-kr text-[17px] text-ink mb-2 leading-relaxed">
+                  아직 길 위에 있나요? 목적지에 도착하면 스탬프가 찍힙니다.
+                </p>
+                {distance !== null && (
+                  <p className="text-[12px] text-ink-light tabular-nums">
+                    현재 거리 · 약 {formatDistance(distance)}
+                  </p>
                 )}
-
-                {(status === "requesting" || status === "tracking") && (
-                  <>
-                    <p className="font-serif-kr text-[17px] text-ink mb-2 leading-relaxed">
-                      아직 길 위에 있나요? 목적지에 도착하면 굿즈가 해금됩니다.
-                    </p>
-                    {distance !== null && (
-                      <p className="text-[12px] text-ink-light tabular-nums">
-                        현재 거리 · 약 {formatDistance(distance)}
-                      </p>
-                    )}
-                    {status === "requesting" && (
-                      <p className="text-[11px] text-ink-light mt-2">위치를 가져오는 중…</p>
-                    )}
-                  </>
+                {status === "requesting" && (
+                  <p className="text-[11px] text-ink-light mt-2">위치를 가져오는 중…</p>
                 )}
               </>
             )}
-
             {status === "denied" && (
-              <p className="text-[13px] text-ink-mid">
-                위치 권한이 거부되었어요. 브라우저 설정에서 위치 접근을 허용해 주세요.
-              </p>
+              <p className="text-[13px] text-ink-mid">위치 권한이 거부되었어요. 브라우저 설정에서 위치 접근을 허용해 주세요.</p>
             )}
             {status === "unsupported" && (
               <p className="text-[13px] text-ink-mid">이 기기에서는 위치 정보를 사용할 수 없어요.</p>
@@ -112,57 +193,76 @@ export default function ArrivalSection({ target, goodsUrl, goodsType, placeName,
             {status === "error" && (
               <p className="text-[13px] text-ink-mid">위치를 가져오지 못했어요. 잠시 후 다시 시도해 주세요.</p>
             )}
+          </>
+        )}
+      </div>
+
+      {/* 티켓 */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative rounded-md overflow-hidden border border-faint bg-ink-faint/40 shadow-xl"
+      >
+        {/* 티켓 배경 (장소 이미지) */}
+        <div className="relative h-48 md:h-56 overflow-hidden">
+          {coverImage && (
+            <img
+              src={`/images/${coverImage}.jpg`}
+              alt={placeName}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/30" />
+          <div className="absolute inset-0 flex flex-col justify-between p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-[9px] tracking-[0.35em] text-white/80 inline-flex items-center gap-1.5">
+                <Ticket className="w-3 h-3" /> TRACK 052 · TICKET
+              </p>
+              <p className="text-[9px] tracking-[0.2em] text-white/70 tabular-nums">
+                {target.lat.toFixed(3)}°N · {target.lon.toFixed(3)}°E
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.25em] text-accent-c mb-1">VISIT</p>
+              <h4 className="font-serif-kr text-2xl md:text-3xl text-white leading-tight">{placeName}</h4>
+            </div>
           </div>
         </div>
 
-        {/* Right: goods */}
-        <div className="w-full md:w-[300px] shrink-0">
-          <div className="relative rounded-sm border border-faint overflow-hidden bg-card-bg aspect-[3/4]">
-            <AnimatePresence>
-              {arrived && goodsUrl ? (
-                <motion.img
-                  key="goods"
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  src={goodsUrl}
-                  alt={`${placeName} 굿즈`}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                <motion.div
-                  key="locked"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-ink-light"
-                >
-                  <Lock className="w-6 h-6" />
-                  <p className="text-[10px] tracking-[0.25em] uppercase">Locked</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-ink-light">
-              {goodsType === "stamp" ? "Stamp" : "Wallpaper"}
+        {/* 천공 라인 */}
+        <div
+          className="h-3 bg-paper"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 6px 6px, hsl(var(--ink-faint)) 3px, transparent 4px)",
+            backgroundSize: "12px 12px",
+            backgroundPosition: "0 -3px",
+          }}
+        />
+
+        {/* 스탬프 영역 */}
+        <div className="p-5 bg-paper">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] tracking-[0.3em] text-ink-light">STAMPS</p>
+            <p className="text-[10px] tracking-[0.2em] text-ink-light tabular-nums">
+              {(stamps.day ? 1 : 0) + (stamps.night ? 1 : 0)} / 2
             </p>
-            <a
-              href={arrived && goodsUrl ? goodsUrl : undefined}
-              download={arrived ? `${placeName}-goods` : undefined}
-              target="_blank"
-              rel="noreferrer"
-              aria-disabled={!arrived}
-              className={`inline-flex items-center gap-2 text-[11px] tracking-[0.18em] uppercase px-4 py-2 rounded-full border transition-colors ${
-                arrived && goodsUrl
-                  ? "border-ink text-ink hover:bg-ink hover:text-paper"
-                  : "border-faint text-ink-light pointer-events-none opacity-50"
-              }`}
-            >
-              <Download className="w-3 h-3" /> 다운로드
-            </a>
           </div>
+          <div className="flex gap-3">
+            <StampSlot kind="day" stampedAt={stamps.day} />
+            <StampSlot kind="night" stampedAt={stamps.night} />
+          </div>
+          <p className="mt-4 text-[11px] text-ink-mid leading-relaxed">
+            {collectedBoth
+              ? "낮과 밤, 두 시간대의 길을 모두 만나셨어요. 완전한 티켓을 모았습니다."
+              : arrived
+                ? `이번 방문은 ${todayKind === "day" ? "주간(낮)" : "야간(밤)"} 스탬프로 기록됐어요. 반대 시간대에 다시 방문해 나머지를 모아보세요.`
+                : "도착을 인증하면 현재 시간대(낮 06–18시 / 밤 18–06시)의 스탬프가 찍힙니다."}
+          </p>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
