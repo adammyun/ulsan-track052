@@ -269,13 +269,21 @@ function Dots({ value, label, tone = "ink", size = "sm" }: { value: number; labe
   );
 }
 
+// 실시간 낮/밤 — 06:00~17:59 낮, 18:00~05:59 밤
+const isNightHour = (d = new Date()) => {
+  const h = d.getHours();
+  return h < 6 || h >= 18;
+};
+
 // ── 메인 ──────────────────────────────────────────────────────────
 export default function Index() {
   // 아카이브 상세는 모달로 표시합니다.
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openPlaceholder, setOpenPlaceholder] = useState<ArchItem | null>(null);
   const [intro, setIntro] = useState(true);
   const [scrolled, setScrolled] = useState(false);
-  const [isNight, setIsNight] = useState(false);
+  // 접속 시각 기준 자동 낮/밤. 매 분 동기화.
+  const [isNight, setIsNight] = useState<boolean>(() => isNightHour());
   const [concept, setConcept] = useState<Concept>("track");
   const [trackPick, setTrackPick] = useState<PickConcept>(() => {
     const arr: PickConcept[] = ["gatgil", "saetgil", "jireum"];
