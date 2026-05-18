@@ -849,7 +849,11 @@ export default function Index() {
           </div>
         </div>
       </footer>
-      <ArchiveDetailModal id={openId} onClose={() => setOpenId(null)} />
+      <ArchiveDetailModal
+        id={openId}
+        placeholder={openPlaceholder ? { name: openPlaceholder.name, type: openPlaceholder.type, coverUrl: openPlaceholder.coverUrl! } : null}
+        onClose={() => { setOpenId(null); setOpenPlaceholder(null); }}
+      />
     </main>
   );
 }
