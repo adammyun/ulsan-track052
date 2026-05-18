@@ -215,7 +215,15 @@ function DayNightImg({ base, alt, isNight, className = "" }: { base: string; alt
 }
 
 // 아카이브 카드: -night.jpg 가 있으면 크로스페이드, 없으면 day만
-function ArchImg({ base, alt, isNight }: { base: string; alt: string; isNight: boolean }) {
+function ArchImg({ base, alt, isNight, coverUrl }: { base: string; alt: string; isNight: boolean; coverUrl?: string }) {
+  if (coverUrl) {
+    return (
+      <div className="absolute inset-0 w-full h-full overflow-hidden">
+        <img src={coverUrl} alt={alt}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "brightness-[0.55]" : "brightness-100"}`} loading="lazy" />
+      </div>
+    );
+  }
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
       <img src={`/images/${base}.jpg`} alt={alt}
