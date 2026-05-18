@@ -126,7 +126,7 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                 className="group flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
               >
                 <MapPin className="w-3 h-3" />
-                <span>{id ?? "—"}</span>
+                <span>{id ?? (placeholder ? "PLACEHOLDER" : "—")}</span>
                 {forceUnlocked && (
                   <span className="text-[9px] tracking-[0.2em] text-accent-c">· DEV UNLOCKED</span>
                 )}
