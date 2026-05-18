@@ -655,7 +655,7 @@ export default function Index() {
               <button onClick={()=>setMoreNamgu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
                 {moreNamgu ? "접기" : "더보기"}
               </button>
-              <span className="text-[10px] text-ink-light">{moreNamgu ? "전체 6곳을 보고 있어요" : "+ 3곳 더 있어요"}</span>
+              <span className="text-[10px] text-ink-light">{moreNamgu ? `전체 ${namguList.length}곳을 보고 있어요` : "+ 6곳 더 있어요"}</span>
             </div>
           </>
         )}
