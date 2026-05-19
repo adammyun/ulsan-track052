@@ -145,21 +145,34 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full md:w-[min(960px,92vw)] h-[100dvh] md:h-[min(90vh,920px)] md:my-auto md:rounded-md overflow-hidden bg-paper text-ink shadow-2xl flex flex-col transition-colors duration-500"
+            className={`relative z-10 w-full md:w-[min(960px,92vw)] h-[100dvh] md:h-[min(90vh,920px)] md:my-auto md:rounded-md overflow-hidden text-ink shadow-2xl flex flex-col transition-colors duration-500 ${effectiveNight ? "night bg-paper/95 backdrop-blur-xl" : "bg-paper/95 backdrop-blur-xl"}`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 md:px-8 py-3.5 border-b border-faint bg-paper/95 backdrop-blur-md shrink-0 transition-colors duration-500">
-              <button
-                onDoubleClick={() => setForceUnlocked(true)}
-                title="Path ID (double-click: dev unlock)"
-                className="group flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
-              >
-                <MapPin className="w-3 h-3" />
-                <span>{id ?? (placeholder ? "PLACEHOLDER" : "—")}</span>
-                {forceUnlocked && (
-                  <span className="text-[9px] tracking-[0.2em] text-accent-c">· DEV UNLOCKED</span>
-                )}
-              </button>
+            <div className="flex items-center justify-between px-5 md:px-8 py-3.5 border-b border-faint bg-paper/80 backdrop-blur-md shrink-0 transition-colors duration-500">
+              <div className="flex items-center gap-3">
+                <button
+                  onDoubleClick={() => setForceUnlocked(true)}
+                  title="Path ID (double-click: dev GPS unlock)"
+                  className="group flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span>{id ?? (placeholder ? "PLACEHOLDER" : "—")}</span>
+                  {forceUnlocked && (
+                    <span className="text-[9px] tracking-[0.2em] text-accent-c">· DEV UNLOCKED</span>
+                  )}
+                </button>
+                <button
+                  onDoubleClick={() => setForcedNight((v) => !(v ?? isNightHour()))}
+                  title="더블클릭: 낮 ↔ 밤 토글"
+                  className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
+                >
+                  <Ticket className="w-3 h-3" />
+                  {effectiveNight ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+                  {forcedNight !== null && (
+                    <span className="text-[9px] tracking-[0.2em] text-accent-c">· FORCED</span>
+                  )}
+                </button>
+              </div>
               <button
                 onClick={onClose}
                 aria-label="Close"
@@ -168,6 +181,7 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                 <X className="w-4 h-4" />
               </button>
             </div>
+
 
             {/* Body (scrollable) */}
             <div className="flex-1 overflow-y-auto overscroll-contain grain transition-colors duration-500">
