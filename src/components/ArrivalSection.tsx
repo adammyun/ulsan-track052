@@ -269,36 +269,6 @@ export default function ArrivalSection({
         </div>
       </motion.div>
 
-      {/* 개발자 영역 — 실제 시각/위치와 무관하게 스탬프 동작 확인용 */}
-      <div className="mt-6 rounded-sm border border-dashed border-faint bg-card-bg/40 p-4">
-        <p className="text-[9px] tracking-[0.3em] text-ink-light mb-3">DEV · TEST CONTROLS</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => forceStamp("day")}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-mid hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors inline-flex items-center gap-1.5"
-          >
-            <Sun className="w-3 h-3" /> 낮 스탬프 획득
-          </button>
-          <button
-            type="button"
-            onClick={() => forceStamp("night")}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-mid hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors inline-flex items-center gap-1.5"
-          >
-            <Moon className="w-3 h-3" /> 밤 스탬프 획득
-          </button>
-          <button
-            type="button"
-            onClick={resetStamps}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-light hover:text-ink transition-colors"
-          >
-            스탬프 초기화
-          </button>
-        </div>
-        <p className="mt-3 text-[10px] text-ink-light leading-relaxed">
-          실제 시간이나 GPS 위치와 무관하게 두 스탬프가 정상적으로 찍히고 티켓 UI에 반영되는지 확인할 수 있어요.
-        </p>
-      </div>
     </section>
   );
 }
