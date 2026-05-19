@@ -1,10 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { X, MapPin } from "lucide-react";
+import { X, MapPin, Ticket, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ArrivalSection from "@/components/ArrivalSection";
 import AroundView from "@/components/AroundView";
+
+const GALLERY_POOL = [
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80",
+  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80",
+  "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=1200&q=80",
+  "https://images.unsplash.com/photo-1505765050516-f72dcac9c60a?w=1400&q=80",
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80",
+];
+
+const isNightHour = (d = new Date()) => {
+  const h = d.getHours();
+  return h < 6 || h >= 18;
+};
 
 interface RouteStep {
   step: string;
@@ -51,6 +65,10 @@ interface Props {
 export default function ArchiveDetailModal({ id, placeholder = null, onClose }: Props) {
   const open = !!id || !!placeholder;
   const [forceUnlocked, setForceUnlocked] = useState(false);
+  // 모달 내부 전용 낮/밤 오버라이드. null 이면 실제 시각을 따름.
+  const [forcedNight, setForcedNight] = useState<boolean | null>(null);
+  const effectiveNight = forcedNight ?? isNightHour();
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["path", id],
@@ -67,10 +85,21 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
     enabled: !!id,
   });
 
-  // Reset dev bypass whenever we open a different article
+  // Gallery — deterministic per article so it doesn't reshuffle on rerender
+  const galleryKey = id ?? placeholder?.name ?? "x";
+  const gallery = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < galleryKey.length; i++) h = (h * 31 + galleryKey.charCodeAt(i)) | 0;
+    const start = Math.abs(h) % GALLERY_POOL.length;
+    return Array.from({ length: 6 }, (_, i) => GALLERY_POOL[(start + i) % GALLERY_POOL.length]);
+  }, [galleryKey]);
+
+  // Reset dev bypass + theme override whenever we open a different article
   useEffect(() => {
     setForceUnlocked(false);
-  }, [id]);
+    setForcedNight(null);
+    setLightboxIdx(null);
+  }, [id, placeholder?.name]);
 
   // Scroll lock + ESC to close
   useEffect(() => {
@@ -116,21 +145,34 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full md:w-[min(960px,92vw)] h-[100dvh] md:h-[min(90vh,920px)] md:my-auto md:rounded-md overflow-hidden bg-paper text-ink shadow-2xl flex flex-col transition-colors duration-500"
+            className={`relative z-10 w-full md:w-[min(960px,92vw)] h-[100dvh] md:h-[min(90vh,920px)] md:my-auto md:rounded-md overflow-hidden text-ink shadow-2xl flex flex-col transition-colors duration-500 ${effectiveNight ? "night bg-paper/95 backdrop-blur-xl" : "bg-paper/95 backdrop-blur-xl"}`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 md:px-8 py-3.5 border-b border-faint bg-paper/95 backdrop-blur-md shrink-0 transition-colors duration-500">
-              <button
-                onDoubleClick={() => setForceUnlocked(true)}
-                title="Path ID (double-click: dev unlock)"
-                className="group flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
-              >
-                <MapPin className="w-3 h-3" />
-                <span>{id ?? (placeholder ? "PLACEHOLDER" : "—")}</span>
-                {forceUnlocked && (
-                  <span className="text-[9px] tracking-[0.2em] text-accent-c">· DEV UNLOCKED</span>
-                )}
-              </button>
+            <div className="flex items-center justify-between px-5 md:px-8 py-3.5 border-b border-faint bg-paper/80 backdrop-blur-md shrink-0 transition-colors duration-500">
+              <div className="flex items-center gap-3">
+                <button
+                  onDoubleClick={() => setForceUnlocked(true)}
+                  title="Path ID (double-click: dev GPS unlock)"
+                  className="group flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
+                >
+                  <MapPin className="w-3 h-3" />
+                  <span>{id ?? (placeholder ? "PLACEHOLDER" : "—")}</span>
+                  {forceUnlocked && (
+                    <span className="text-[9px] tracking-[0.2em] text-accent-c">· DEV UNLOCKED</span>
+                  )}
+                </button>
+                <button
+                  onDoubleClick={() => setForcedNight((v) => !(v ?? isNightHour()))}
+                  title="더블클릭: 낮 ↔ 밤 토글"
+                  className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] uppercase text-ink-light hover:text-ink transition-colors select-none"
+                >
+                  <Ticket className="w-3 h-3" />
+                  {effectiveNight ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+                  {forcedNight !== null && (
+                    <span className="text-[9px] tracking-[0.2em] text-accent-c">· FORCED</span>
+                  )}
+                </button>
+              </div>
               <button
                 onClick={onClose}
                 aria-label="Close"
@@ -139,6 +181,7 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                 <X className="w-4 h-4" />
               </button>
             </div>
+
 
             {/* Body (scrollable) */}
             <div className="flex-1 overflow-y-auto overscroll-contain grain transition-colors duration-500">
@@ -312,15 +355,120 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                         placeName={data.name}
                         coverImage={data.cover_image}
                         forceUnlocked={forceUnlocked}
+                        nowKindOverride={effectiveNight ? "night" : "day"}
                       />
                     </motion.div>
+
+                    {/* More Scenes Gallery */}
+                    <motion.section
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: true, amount: 0.15 }}
+                      variants={fadeUp}
+                      className="mt-16"
+                    >
+                      <p className="text-[10px] tracking-[0.3em] text-ink-light flex items-center gap-3 mb-5">
+                        MORE SCENES <span className="block w-7 h-px bg-accent-c" />
+                      </p>
+                      <p className="text-[12px] text-ink-mid mb-5 leading-relaxed">
+                        이 길의 분위기를 더 담은 풍경들. 이미지를 누르면 크게 볼 수 있어요.
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 [grid-auto-rows:10rem] md:[grid-auto-rows:11rem]">
+                        {gallery.map((src, i) => {
+                          const span =
+                            i === 0
+                              ? "col-span-2 row-span-2"
+                              : i === 3
+                                ? "row-span-2"
+                                : "";
+                          return (
+                            <button
+                              key={src + i}
+                              type="button"
+                              onClick={() => setLightboxIdx(i)}
+                              className={`relative overflow-hidden rounded-sm group bg-ink-faint ${span}`}
+                            >
+                              <img
+                                src={src}
+                                alt={`${data.name} scene ${i + 1}`}
+                                loading="lazy"
+                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.section>
                   </article>
                 </>
               )}
             </div>
           </motion.div>
+
+          {/* Lightbox */}
+          <AnimatePresence>
+            {lightboxIdx !== null && (
+              <motion.div
+                key="lightbox"
+                className="absolute inset-0 z-30 flex items-center justify-center p-4 md:p-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                onClick={() => setLightboxIdx(null)}
+              >
+                <div className="absolute inset-0 bg-black/90 backdrop-blur" />
+                <motion.img
+                  key={gallery[lightboxIdx]}
+                  src={gallery[lightboxIdx]}
+                  alt=""
+                  initial={{ scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.96, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative max-h-full max-w-full object-contain rounded-sm shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  type="button"
+                  aria-label="이전"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx((v) => (v === null ? v : (v - 1 + gallery.length) % gallery.length));
+                  }}
+                  className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="다음"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx((v) => (v === null ? v : (v + 1) % gallery.length));
+                  }}
+                  className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="닫기"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIdx(null);
+                  }}
+                  className="absolute top-4 right-4 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
+
   );
 }

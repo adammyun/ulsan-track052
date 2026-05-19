@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Viewer } from "@photo-sphere-viewer/core";
 import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
 import "@photo-sphere-viewer/core/index.css";
@@ -21,6 +21,7 @@ interface AroundComment {
   yaw: number;
   content: string;
   created_at: string;
+  _dummy?: boolean;
 }
 
 interface Props {
@@ -31,6 +32,56 @@ interface Props {
 
 const PLACEHOLDER_PANO =
   "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
+
+// 반응형/줄바꿈 확인용 더미 코멘트 (서로 다른 위치 & 길이)
+const DUMMY_COMMENTS: AroundComment[] = [
+  {
+    id: "dummy-1",
+    path_id: "_",
+    user_name: "수민",
+    avatar_url: null,
+    pitch: 0.05,
+    yaw: 0.6,
+    content: "여기 노을이 정말 예뻐요 🌅",
+    created_at: new Date().toISOString(),
+    _dummy: true,
+  },
+  {
+    id: "dummy-2",
+    path_id: "_",
+    user_name: "여행자 J",
+    avatar_url: null,
+    pitch: -0.15,
+    yaw: 2.4,
+    content:
+      "이 모퉁이를 돌면 작은 카페가 하나 나오는데, 사장님이 직접 내려주시는 핸드드립이 인상적이었어요. 오래 머물고 싶어지는 자리예요.",
+    created_at: new Date().toISOString(),
+    _dummy: true,
+  },
+  {
+    id: "dummy-3",
+    path_id: "_",
+    user_name: "지나가던 사람",
+    avatar_url: null,
+    pitch: 0.2,
+    yaw: 4.1,
+    content: "비 오는 날 다시 와보고 싶다.",
+    created_at: new Date().toISOString(),
+    _dummy: true,
+  },
+  {
+    id: "dummy-4",
+    path_id: "_",
+    user_name: "ulsan_walker",
+    avatar_url: null,
+    pitch: -0.05,
+    yaw: 5.3,
+    content:
+      "아침 7시쯤에 오면 사람이 거의 없어서 이 풍경을 통째로 가질 수 있어요. 새소리만 들립니다.",
+    created_at: new Date().toISOString(),
+    _dummy: true,
+  },
+];
 
 export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +94,12 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // 실제 코멘트가 없으면 더미를 렌더링 (저장 X)
+  const effectiveComments = useMemo<AroundComment[]>(
+    () => (comments.length > 0 ? comments : DUMMY_COMMENTS),
+    [comments],
+  );
 
   // Fetch comments
   const loadComments = useCallback(async () => {
@@ -78,7 +135,6 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
 
     const onClick = (e: { data: { rightclick: boolean; pitch: number; yaw: number; target?: unknown } }) => {
       if (e.data.rightclick) return;
-      // Open new comment composer for empty space
       setActiveComment(null);
       setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
     };
@@ -105,7 +161,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
     const plugin = markersRef.current;
     if (!plugin) return;
     plugin.setMarkers(
-      comments.map((c) => ({
+      effectiveComments.map((c) => ({
         id: c.id,
         position: { pitch: c.pitch, yaw: c.yaw },
         html: `<div class="av-dot"><span class="av-dot-core"></span><span class="av-dot-ring"></span></div>`,
@@ -124,7 +180,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
         data: { comment: c },
       })),
     );
-  }, [comments]);
+  }, [effectiveComments]);
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
@@ -162,17 +218,20 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
         파노라마를 드래그해 둘러보세요. 빈 공간을 클릭하면 그 자리에 짧은 이야기를 남길 수 있어요.
       </p>
 
-      <div className="relative rounded-sm overflow-hidden bg-black aspect-[16/9] md:aspect-[2/1] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
-        <div ref={containerRef} className="absolute inset-0" />
+      {/* 바깥 컨테이너는 overflow-visible — 말풍선/입력창이 잘리지 않도록 */}
+      <div className="relative aspect-[16/9] md:aspect-[2/1]">
+        {/* 뷰어 캔버스만 클리핑 */}
+        <div className="absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
+          <div ref={containerRef} className="absolute inset-0" />
 
-        {/* Empty state hint */}
-        {comments.length === 0 && (
-          <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
-            <MessageCircle className="w-3 h-3" /> 아직 남겨진 이야기가 없어요
-          </div>
-        )}
+          {comments.length === 0 && (
+            <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
+              <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
+            </div>
+          )}
+        </div>
 
-        {/* Speech bubble for active comment */}
+        {/* Speech bubble for active comment — 뷰어 위에 떠 있고, 잘리지 않음 */}
         <AnimatePresence>
           {activeComment && (
             <motion.div
@@ -180,7 +239,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 bottom-6 -translate-x-1/2 max-w-[88%] md:max-w-md z-20"
+              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50"
             >
               <div className="relative bg-white/95 backdrop-blur text-ink rounded-2xl px-5 py-4 shadow-2xl">
                 <button
@@ -201,7 +260,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
                     {activeComment.user_name}
                   </span>
                 </div>
-                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/90">
+                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/90 break-words whitespace-pre-wrap">
                   {activeComment.content}
                 </p>
                 <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 rotate-45" />
@@ -218,7 +277,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 16 }}
               transition={{ duration: 0.25 }}
-              className="absolute inset-x-3 bottom-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px] z-20"
+              className="absolute inset-x-3 bottom-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px] z-50"
             >
               <div className="bg-paper/95 backdrop-blur rounded-sm p-4 shadow-2xl border border-faint">
                 <div className="flex items-center justify-between mb-3">
@@ -272,7 +331,6 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
         <p className="mt-3 text-[11px] text-ink-light italic">{caption}</p>
       )}
 
-      {/* Component-scoped styles for marker dots & tooltip */}
       <style>{`
         .av-dot {
           position: relative;

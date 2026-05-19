@@ -11,6 +11,8 @@ interface Props {
   coverImage?: string;
   /** Developer bypass — when true, treat as arrived without GPS check. */
   forceUnlocked?: boolean;
+  /** Override the time-of-day used to decide which stamp gets pressed. */
+  nowKindOverride?: "day" | "night" | null;
 }
 
 type StampKind = "day" | "night";
@@ -76,7 +78,7 @@ function StampSlot({
 }
 
 export default function ArrivalSection({
-  target, placeName, coverImage, forceUnlocked = false,
+  target, placeName, coverImage, forceUnlocked = false, nowKindOverride = null,
 }: Props) {
   const { status, distance, arrived: gpsArrived, start } = useArrival(target);
   const arrived = gpsArrived || forceUnlocked;
@@ -101,7 +103,7 @@ export default function ArrivalSection({
     if (!arrived || firedRef.current) return;
     firedRef.current = true;
 
-    const kind = currentStampKind();
+    const kind: StampKind = nowKindOverride ?? currentStampKind();
     setStamps((prev) => {
       if (prev[kind]) return prev;
       const next = { ...prev, [kind]: new Date().toISOString() };
@@ -114,28 +116,13 @@ export default function ArrivalSection({
     burst({ x: 0.25, y: 0.6 });
     setTimeout(() => burst({ x: 0.75, y: 0.6 }), 180);
     setTimeout(() => burst({ x: 0.5, y: 0.4 }), 360);
-  }, [arrived, placeName]);
-
-  // 개발자용: 특정 시간대 스탬프 강제 획득
-  const forceStamp = (kind: StampKind) => {
-    setStamps((prev) => {
-      const next = { ...prev, [kind]: new Date().toISOString() };
-      try { localStorage.setItem(stampKey(placeName), JSON.stringify(next)); } catch {}
-      return next;
-    });
-    const burst = (origin: { x: number; y: number }) =>
-      confetti({ particleCount: 70, spread: 70, origin, scalar: 0.85, ticks: 180, zIndex: 9999 });
-    burst({ x: 0.3, y: 0.55 });
-    setTimeout(() => burst({ x: 0.7, y: 0.55 }), 160);
-  };
-
-  const resetStamps = () => {
-    setStamps({});
-    try { localStorage.removeItem(stampKey(placeName)); } catch {}
-  };
+  }, [arrived, placeName, nowKindOverride]);
 
   const insecure = status === "insecure";
-  const todayKind = useMemo(() => currentStampKind(), [arrived]);
+  const todayKind: StampKind = useMemo(
+    () => nowKindOverride ?? currentStampKind(),
+    [arrived, nowKindOverride],
+  );
   const collectedBoth = !!stamps.day && !!stamps.night;
 
   return (
@@ -282,36 +269,6 @@ export default function ArrivalSection({
         </div>
       </motion.div>
 
-      {/* 개발자 영역 — 실제 시각/위치와 무관하게 스탬프 동작 확인용 */}
-      <div className="mt-6 rounded-sm border border-dashed border-faint bg-card-bg/40 p-4">
-        <p className="text-[9px] tracking-[0.3em] text-ink-light mb-3">DEV · TEST CONTROLS</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => forceStamp("day")}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-mid hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors inline-flex items-center gap-1.5"
-          >
-            <Sun className="w-3 h-3" /> 낮 스탬프 획득
-          </button>
-          <button
-            type="button"
-            onClick={() => forceStamp("night")}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-mid hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors inline-flex items-center gap-1.5"
-          >
-            <Moon className="w-3 h-3" /> 밤 스탬프 획득
-          </button>
-          <button
-            type="button"
-            onClick={resetStamps}
-            className="text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full border border-faint text-ink-light hover:text-ink transition-colors"
-          >
-            스탬프 초기화
-          </button>
-        </div>
-        <p className="mt-3 text-[10px] text-ink-light leading-relaxed">
-          실제 시간이나 GPS 위치와 무관하게 두 스탬프가 정상적으로 찍히고 티켓 UI에 반영되는지 확인할 수 있어요.
-        </p>
-      </div>
     </section>
   );
 }
