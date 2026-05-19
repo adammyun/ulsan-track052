@@ -118,26 +118,11 @@ export default function ArrivalSection({
     setTimeout(() => burst({ x: 0.5, y: 0.4 }), 360);
   }, [arrived, placeName, nowKindOverride]);
 
-  // 개발자용: 특정 시간대 스탬프 강제 획득
-  const forceStamp = (kind: StampKind) => {
-    setStamps((prev) => {
-      const next = { ...prev, [kind]: new Date().toISOString() };
-      try { localStorage.setItem(stampKey(placeName), JSON.stringify(next)); } catch {}
-      return next;
-    });
-    const burst = (origin: { x: number; y: number }) =>
-      confetti({ particleCount: 70, spread: 70, origin, scalar: 0.85, ticks: 180, zIndex: 9999 });
-    burst({ x: 0.3, y: 0.55 });
-    setTimeout(() => burst({ x: 0.7, y: 0.55 }), 160);
-  };
-
-  const resetStamps = () => {
-    setStamps({});
-    try { localStorage.removeItem(stampKey(placeName)); } catch {}
-  };
-
   const insecure = status === "insecure";
-  const todayKind = useMemo(() => currentStampKind(), [arrived]);
+  const todayKind: StampKind = useMemo(
+    () => nowKindOverride ?? currentStampKind(),
+    [arrived, nowKindOverride],
+  );
   const collectedBoth = !!stamps.day && !!stamps.night;
 
   return (
