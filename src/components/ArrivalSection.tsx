@@ -11,6 +11,8 @@ interface Props {
   coverImage?: string;
   /** Developer bypass — when true, treat as arrived without GPS check. */
   forceUnlocked?: boolean;
+  /** Override the time-of-day used to decide which stamp gets pressed. */
+  nowKindOverride?: "day" | "night" | null;
 }
 
 type StampKind = "day" | "night";
