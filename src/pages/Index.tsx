@@ -127,23 +127,6 @@ const PICKS: Record<PickConcept, {
 
 type ArchItem = { img: string; type: string; name: string; meta: string; tags: string; extra?: boolean; density: number; safety: number; coverUrl?: string; placeholder?: boolean; essay?: string[]; loc?: string; badges?: string[] };
 
-// 자연(숲/바다/강) 무드의 Unsplash 고화질 placeholder
-const UNSPLASH = {
-  forest:    "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1600&q=80&auto=format&fit=crop",
-  ocean:     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80&auto=format&fit=crop",
-  river:     "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80&auto=format&fit=crop",
-  mountain:  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80&auto=format&fit=crop",
-  fog:       "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1600&q=80&auto=format&fit=crop",
-  coast:     "https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1600&q=80&auto=format&fit=crop",
-};
-const PLACEHOLDER_ITEMS: ArchItem[] = [
-  { img: "ph-forest-trail",   type: "샛길", name: "이름 없는 숲길",     meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 2, safety: 3, coverUrl: UNSPLASH.forest,   placeholder: true },
-  { img: "ph-ocean-overlook", type: "갓길", name: "바다가 보이는 언덕", meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 3, safety: 4, coverUrl: UNSPLASH.ocean,    placeholder: true },
-  { img: "ph-river-bend",     type: "지름길", name: "강이 굽이도는 자리", meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 3, safety: 4, coverUrl: UNSPLASH.river,    placeholder: true },
-  { img: "ph-fog-grove",      type: "샛길", name: "안개의 자작나무 숲", meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 2, safety: 2, coverUrl: UNSPLASH.fog,      placeholder: true },
-  { img: "ph-mountain-ridge", type: "지름길", name: "능선을 따라 걷기",   meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 1, safety: 2, coverUrl: UNSPLASH.mountain, placeholder: true },
-  { img: "ph-coast-path",     type: "갓길", name: "해안가 산책로",       meta: "준비 중 · 곧 공개", tags: "all", extra: true, density: 4, safety: 4, coverUrl: UNSPLASH.coast,    placeholder: true },
-];
 const NAMGU: ArchItem[] = [
   { img: "arch-samsan-alley", type: "샛길", name: "삼산동 주택가 골목", meta: "남구 · 20분 · 쉬움", tags: "namgu", density: 3, safety: 3 },
   { img: "arch-jangseongpo", type: "갓길", name: "장생포 고래문화마을", meta: "남구 · 40분 · 쉬움", tags: "namgu", density: 4, safety: 4 },
@@ -380,12 +363,8 @@ export default function Index() {
   const pickConcept: PickConcept = concept === "track" ? trackPick : concept;
   const pick = PICKS[pickConcept];
   // 더보기에는 placeholder(자연 풍경) 컨텐츠를 섞어 레이아웃이 꽉 차도록 구성
-  const namguList = moreNamgu
-    ? [...NAMGU, ...PLACEHOLDER_ITEMS.slice(0, 3)]
-    : NAMGU.filter((i) => !i.extra);
-  const jungguList = moreJunggu
-    ? [...JUNGGU, ...PLACEHOLDER_ITEMS.slice(3, 6)]
-    : JUNGGU.filter((i) => !i.extra);
+  const namguList = moreNamgu ? NAMGU : NAMGU.filter((i) => !i.extra);
+  const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
   const showJunggu = filter !== "namgu";
   const cycle = useMemo(() => cycleAround(concept), [concept]);
@@ -570,20 +549,7 @@ export default function Index() {
         <div key={pickConcept} className="grid md:grid-cols-[1.25fr_1fr] gap-10 md:gap-14 items-start animate-fade-up">
           <button
             type="button"
-            onClick={() => setOpenPlaceholder({
-              img: pick.id,
-              type: pick.type,
-              name: pick.title.join(" "),
-              meta: pick.loc,
-              tags: "all",
-              density: pick.density,
-              safety: pick.safety,
-              coverUrl: `/images/${pick.img}${isNight ? "-night" : "-day"}.jpg`,
-              placeholder: true,
-              essay: pick.essay,
-              loc: pick.loc,
-              badges: pick.badges,
-            } as any)}
+            onClick={() => setOpenId(pick.id)}
             className="reveal group relative aspect-[4/3] overflow-hidden rounded-sm bg-[hsl(var(--ink-faint))] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))]"
             aria-label={`${pick.title.join(" ")} 자세히 보기`}
           >
@@ -612,20 +578,7 @@ export default function Index() {
                 <span key={b} className="text-[9px] px-2.5 py-1 border border-faint text-ink-mid tracking-wide rounded-full hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors cursor-default">{b}</span>
               ))}
             </div>
-            <button type="button" onClick={() => setOpenPlaceholder({
-              img: pick.id,
-              type: pick.type,
-              name: pick.title.join(" "),
-              meta: pick.loc,
-              tags: "all",
-              density: pick.density,
-              safety: pick.safety,
-              coverUrl: `/images/${pick.img}${isNight ? "-night" : "-day"}.jpg`,
-              placeholder: true,
-              essay: pick.essay,
-              loc: pick.loc,
-              badges: pick.badges,
-            } as any)} className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">자세히 보기</button>
+            <button type="button" onClick={() => setOpenId(pick.id)} className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">자세히 보기</button>
           </div>
         </div>
         </ParallaxLayer>
@@ -661,7 +614,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {namguList.map((it, i) => (
-                <article key={it.img} onClick={() => setOpenPlaceholder({ ...it, placeholder: true, coverUrl: it.coverUrl ?? `/images/${it.img}.jpg` })}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} coverUrl={it.coverUrl} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -694,7 +647,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {jungguList.map((it, i) => (
-                <article key={it.img} onClick={() => setOpenPlaceholder({ ...it, placeholder: true, coverUrl: it.coverUrl ?? `/images/${it.img}.jpg` })}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} coverUrl={it.coverUrl} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
