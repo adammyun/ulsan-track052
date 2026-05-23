@@ -363,12 +363,8 @@ export default function Index() {
   const pickConcept: PickConcept = concept === "track" ? trackPick : concept;
   const pick = PICKS[pickConcept];
   // 더보기에는 placeholder(자연 풍경) 컨텐츠를 섞어 레이아웃이 꽉 차도록 구성
-  const namguList = moreNamgu
-    ? [...NAMGU, ...PLACEHOLDER_ITEMS.slice(0, 3)]
-    : NAMGU.filter((i) => !i.extra);
-  const jungguList = moreJunggu
-    ? [...JUNGGU, ...PLACEHOLDER_ITEMS.slice(3, 6)]
-    : JUNGGU.filter((i) => !i.extra);
+  const namguList = moreNamgu ? NAMGU : NAMGU.filter((i) => !i.extra);
+  const jungguList = moreJunggu ? JUNGGU : JUNGGU.filter((i) => !i.extra);
   const showNamgu = filter !== "junggu";
   const showJunggu = filter !== "namgu";
   const cycle = useMemo(() => cycleAround(concept), [concept]);
