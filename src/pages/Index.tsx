@@ -877,7 +877,16 @@ export default function Index() {
       </footer>
       <ArchiveDetailModal
         id={openId}
-        placeholder={openPlaceholder ? { name: openPlaceholder.name, type: openPlaceholder.type, coverUrl: openPlaceholder.coverUrl! } : null}
+        placeholder={openPlaceholder ? {
+          name: openPlaceholder.name,
+          type: openPlaceholder.type,
+          coverUrl: openPlaceholder.coverUrl!,
+          essay: openPlaceholder.essay,
+          loc: openPlaceholder.loc ?? openPlaceholder.meta,
+          badges: openPlaceholder.badges,
+          density: openPlaceholder.density,
+          safety: openPlaceholder.safety,
+        } : null}
         onClose={() => { setOpenId(null); setOpenPlaceholder(null); }}
       />
     </main>
