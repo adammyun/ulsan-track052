@@ -95,9 +95,9 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 실제 코멘트가 없으면 더미를 렌더링 (저장 X)
+  // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
-    () => (comments.length > 0 ? comments : DUMMY_COMMENTS),
+    () => [...DUMMY_COMMENTS, ...comments],
     [comments],
   );
 
@@ -239,9 +239,9 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50"
+              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50 [filter:drop-shadow(0_8px_24px_rgba(0,0,0,0.55))]"
             >
-              <div className="relative bg-white/95 backdrop-blur text-ink rounded-2xl px-5 py-4 shadow-2xl">
+              <div className="relative bg-white/85 backdrop-blur-md text-ink rounded-2xl px-5 py-4 shadow-2xl border border-white/60 ring-1 ring-black/5">
                 <button
                   onClick={() => setActiveComment(null)}
                   className="absolute top-2 right-2 text-ink-light hover:text-ink"
@@ -260,10 +260,10 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
                     {activeComment.user_name}
                   </span>
                 </div>
-                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/90 break-words whitespace-pre-wrap">
+                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/95 break-words whitespace-pre-wrap [text-shadow:0_1px_0_rgba(255,255,255,0.4)]">
                   {activeComment.content}
                 </p>
-                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/95 rotate-45" />
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/85 rotate-45 border-r border-b border-white/60" />
               </div>
             </motion.div>
           )}

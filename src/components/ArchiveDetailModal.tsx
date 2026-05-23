@@ -40,6 +40,9 @@ interface PathRow {
   latitude: number;
   longitude: number;
   cover_image: string;
+  image_day: string | null;
+  image_night: string | null;
+  around_view_url: string | null;
   content: PathContent;
   goods_url: string | null;
   goods_type: string;
@@ -236,14 +239,29 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                     variants={fadeUp}
                     className="relative h-[42vh] min-h-[280px] overflow-hidden bg-[hsl(var(--ink-faint))]"
                   >
-                    <img
-                      src={`/images/${data.cover_image}.jpg`}
-                      alt={data.name}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                      }}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
+                    {(() => {
+                      const fallback = `/images/${data.cover_image}.jpg`;
+                      const dayUrl = data.image_day || fallback;
+                      const nightUrl = data.image_night || data.image_day || fallback;
+                      const activeUrl = effectiveNight ? nightUrl : dayUrl;
+                      return (
+                        <AnimatePresence mode="sync" initial={false}>
+                          <motion.img
+                            key={activeUrl}
+                            src={activeUrl}
+                            alt={data.name}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.9, ease: "easeInOut" }}
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        </AnimatePresence>
+                      );
+                    })()}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute inset-x-0 bottom-0 px-6 md:px-10 pb-7 text-white">
                       <p className="text-[10px] tracking-[0.3em] text-accent-c mb-2">
@@ -341,6 +359,7 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
 
                     <AroundView
                       pathId={data.id}
+                      panoramaUrl={data.around_view_url ?? undefined}
                       caption={`${data.name} · 360° around view (placeholder)`}
                     />
 
@@ -367,10 +386,11 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                       variants={fadeUp}
                       className="mt-16"
                     >
-                      <p className="text-[10px] tracking-[0.3em] text-ink-light flex items-center gap-3 mb-5">
+                      <div className={`rounded-md p-5 md:p-6 backdrop-blur-md border transition-colors duration-500 ${effectiveNight ? "bg-black/55 border-white/10" : "bg-white/75 border-black/5"}`}>
+                      <p className={`text-[10px] tracking-[0.3em] flex items-center gap-3 mb-3 ${effectiveNight ? "text-white/80" : "text-ink"} [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]`}>
                         MORE SCENES <span className="block w-7 h-px bg-accent-c" />
                       </p>
-                      <p className="text-[12px] text-ink-mid mb-5 leading-relaxed">
+                      <p className={`text-[12px] mb-5 leading-relaxed ${effectiveNight ? "text-white/85" : "text-ink-mid"} [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]`}>
                         이 길의 분위기를 더 담은 풍경들. 이미지를 누르면 크게 볼 수 있어요.
                       </p>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 [grid-auto-rows:10rem] md:[grid-auto-rows:11rem]">
@@ -398,6 +418,7 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                             </button>
                           );
                         })}
+                      </div>
                       </div>
                     </motion.section>
                   </article>
