@@ -60,12 +60,15 @@ export type Database = {
       }
       paths: {
         Row: {
+          around_view_url: string | null
           content: Json
           cover_image: string
           created_at: string
           goods_type: string
           goods_url: string | null
           id: string
+          image_day: string | null
+          image_night: string | null
           latitude: number
           longitude: number
           name: string
@@ -73,12 +76,15 @@ export type Database = {
           type: string
         }
         Insert: {
+          around_view_url?: string | null
           content?: Json
           cover_image: string
           created_at?: string
           goods_type?: string
           goods_url?: string | null
           id: string
+          image_day?: string | null
+          image_night?: string | null
           latitude: number
           longitude: number
           name: string
@@ -86,12 +92,15 @@ export type Database = {
           type: string
         }
         Update: {
+          around_view_url?: string | null
           content?: Json
           cover_image?: string
           created_at?: string
           goods_type?: string
           goods_url?: string | null
           id?: string
+          image_day?: string | null
+          image_night?: string | null
           latitude?: number
           longitude?: number
           name?: string
