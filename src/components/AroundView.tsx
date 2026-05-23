@@ -211,10 +211,10 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
 
   return (
     <section className="my-16">
-      <p className="text-[10px] tracking-[0.3em] text-ink-light flex items-center gap-3 mb-5">
-        AROUND VIEW <span className="block w-7 h-px bg-accent" />
+      <p className="text-[10px] tracking-[0.3em] text-ink flex items-center gap-3 mb-5 font-medium">
+        AROUND VIEW <span className="block w-7 h-px bg-accent-c" />
       </p>
-      <p className="text-[12px] text-ink-mid mb-4 leading-relaxed">
+      <p className="text-[12px] text-ink/80 mb-4 leading-relaxed">
         파노라마를 드래그해 둘러보세요. 빈 공간을 클릭하면 그 자리에 짧은 이야기를 남길 수 있어요.
       </p>
 
@@ -239,31 +239,31 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50 [filter:drop-shadow(0_8px_24px_rgba(0,0,0,0.55))]"
+              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50 [filter:drop-shadow(0_12px_32px_rgba(0,0,0,0.7))]"
             >
-              <div className="relative bg-white/85 backdrop-blur-md text-ink rounded-2xl px-5 py-4 shadow-2xl border border-white/60 ring-1 ring-black/5">
+              <div className="relative bg-stone-900/95 backdrop-blur-md text-white rounded-2xl px-5 py-4 shadow-2xl border border-white/15 ring-1 ring-black/40">
                 <button
                   onClick={() => setActiveComment(null)}
-                  className="absolute top-2 right-2 text-ink-light hover:text-ink"
+                  className="absolute top-2 right-2 text-white/70 hover:text-white"
                   aria-label="닫기"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
                 <div className="flex items-center gap-2 mb-2">
-                  <Avatar className="w-7 h-7">
+                  <Avatar className="w-7 h-7 ring-1 ring-white/20">
                     {activeComment.avatar_url && <AvatarImage src={activeComment.avatar_url} />}
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback className="text-[10px] bg-white/15 text-white">
                       {activeComment.user_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-[11px] tracking-wider text-ink-mid">
+                  <span className="text-[11px] tracking-wider text-white/80">
                     {activeComment.user_name}
                   </span>
                 </div>
-                <p className="font-serif-kr text-[15px] leading-[1.7] text-ink/95 break-words whitespace-pre-wrap [text-shadow:0_1px_0_rgba(255,255,255,0.4)]">
+                <p className="font-serif-kr text-[15px] leading-[1.7] text-white break-words whitespace-pre-wrap">
                   {activeComment.content}
                 </p>
-                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white/85 rotate-45 border-r border-b border-white/60" />
+                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-stone-900/95 rotate-45 border-r border-b border-white/15" />
               </div>
             </motion.div>
           )}
@@ -279,9 +279,9 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
               transition={{ duration: 0.25 }}
               className="absolute inset-x-3 bottom-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px] z-50"
             >
-              <div className="bg-paper/95 backdrop-blur rounded-sm p-4 shadow-2xl border border-faint">
+              <div className="bg-stone-900/95 backdrop-blur-md rounded-lg p-4 shadow-2xl border border-white/15 ring-1 ring-black/40 text-white">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] tracking-[0.3em] text-ink-light">
+                  <p className="text-[10px] tracking-[0.3em] text-white/70">
                     NEW · {draft.pitch.toFixed(2)} / {draft.yaw.toFixed(2)}
                   </p>
                   <button
@@ -289,7 +289,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
                       setDraft(null);
                       setText("");
                     }}
-                    className="text-ink-light hover:text-ink"
+                    className="text-white/70 hover:text-white"
                     aria-label="취소"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -299,24 +299,24 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
                   value={name}
                   onChange={(e) => setName(e.target.value.slice(0, 60))}
                   placeholder="이름 (선택)"
-                  className="mb-2 h-8 text-[12px] bg-transparent"
+                  className="mb-2 h-8 text-[12px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
                 />
                 <Textarea
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 280))}
                   placeholder="이 자리에 어떤 이야기를 남길까요?"
-                  className="text-[13px] min-h-[72px] bg-transparent font-serif-kr"
+                  className="text-[13px] min-h-[72px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30 font-serif-kr"
                   autoFocus
                 />
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[10px] text-ink-light tabular-nums">
+                  <span className="text-[10px] text-white/60 tabular-nums">
                     {text.length}/280
                   </span>
                   <Button
                     size="sm"
                     disabled={!text.trim() || submitting}
                     onClick={submitComment}
-                    className="h-7 text-[11px] tracking-[0.2em] uppercase"
+                    className="h-7 text-[11px] tracking-[0.2em] uppercase bg-white text-stone-900 hover:bg-white/90"
                   >
                     {submitting ? "남기는 중…" : "남기기"}
                   </Button>
