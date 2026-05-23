@@ -57,6 +57,11 @@ interface PlaceholderData {
   name: string;
   type: string;
   coverUrl: string;
+  essay?: string[];
+  loc?: string;
+  badges?: string[];
+  density?: number;
+  safety?: number;
 }
 
 interface Props {
@@ -212,14 +217,28 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                     </div>
                   </motion.section>
                   <article className="max-w-[720px] mx-auto px-6 md:px-10 py-16 text-center">
-                    <p className="text-[10px] tracking-[0.3em] text-ink-light mb-4">PREPARING</p>
-                    <p className="font-serif-kr text-[18px] md:text-[20px] leading-[1.95] text-ink/85">
-                      이 길의 상세 이야기는 아직 준비 중입니다.<br />
-                      곧 길의 좌표, 동선, 그리고 작은 여담들로 다시 찾아올게요.
-                    </p>
-                    <p className="text-[11px] text-ink-light mt-6 tracking-wide">
-                      자연 풍경 이미지는 Unsplash placeholder 입니다.
-                    </p>
+                    {placeholder.loc && (
+                      <p className="text-[11px] text-ink-light tracking-[0.18em] mb-6">{placeholder.loc}</p>
+                    )}
+                    {placeholder.essay && placeholder.essay.length > 0 ? (
+                      <p className="font-serif-kr italic text-[16px] md:text-[18px] leading-[2.1] text-ink-mid mb-8">
+                        {placeholder.essay.map((l, i) => (
+                          <span key={i}>{l}<br /></span>
+                        ))}
+                      </p>
+                    ) : (
+                      <p className="font-serif-kr text-[18px] md:text-[20px] leading-[1.95] text-ink/85 mb-6">
+                        이 길의 상세 이야기는 아직 준비 중입니다.<br />
+                        곧 길의 좌표, 동선, 그리고 작은 여담들로 다시 찾아올게요.
+                      </p>
+                    )}
+                    {placeholder.badges && placeholder.badges.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 justify-center mb-2">
+                        {placeholder.badges.map((b) => (
+                          <span key={b} className="text-[9px] px-2.5 py-1 border border-faint text-ink-mid tracking-wide rounded-full">{b}</span>
+                        ))}
+                      </div>
+                    )}
                   </article>
                 </>
               )}
