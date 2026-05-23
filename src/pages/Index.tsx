@@ -549,20 +549,7 @@ export default function Index() {
         <div key={pickConcept} className="grid md:grid-cols-[1.25fr_1fr] gap-10 md:gap-14 items-start animate-fade-up">
           <button
             type="button"
-            onClick={() => setOpenPlaceholder({
-              img: pick.id,
-              type: pick.type,
-              name: pick.title.join(" "),
-              meta: pick.loc,
-              tags: "all",
-              density: pick.density,
-              safety: pick.safety,
-              coverUrl: `/images/${pick.img}${isNight ? "-night" : "-day"}.jpg`,
-              placeholder: true,
-              essay: pick.essay,
-              loc: pick.loc,
-              badges: pick.badges,
-            } as any)}
+            onClick={() => setOpenId(pick.id)}
             className="reveal group relative aspect-[4/3] overflow-hidden rounded-sm bg-[hsl(var(--ink-faint))] text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--accent))]"
             aria-label={`${pick.title.join(" ")} 자세히 보기`}
           >
@@ -591,20 +578,7 @@ export default function Index() {
                 <span key={b} className="text-[9px] px-2.5 py-1 border border-faint text-ink-mid tracking-wide rounded-full hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors cursor-default">{b}</span>
               ))}
             </div>
-            <button type="button" onClick={() => setOpenPlaceholder({
-              img: pick.id,
-              type: pick.type,
-              name: pick.title.join(" "),
-              meta: pick.loc,
-              tags: "all",
-              density: pick.density,
-              safety: pick.safety,
-              coverUrl: `/images/${pick.img}${isNight ? "-night" : "-day"}.jpg`,
-              placeholder: true,
-              essay: pick.essay,
-              loc: pick.loc,
-              badges: pick.badges,
-            } as any)} className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">자세히 보기</button>
+            <button type="button" onClick={() => setOpenId(pick.id)} className="text-[10px] tracking-[0.18em] text-ink border-b border-current pb-0.5 hover:text-accent-c transition-colors">자세히 보기</button>
           </div>
         </div>
         </ParallaxLayer>
@@ -640,7 +614,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {namguList.map((it, i) => (
-                <article key={it.img} onClick={() => setOpenPlaceholder({ ...it, placeholder: true, coverUrl: it.coverUrl ?? `/images/${it.img}.jpg` })}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} coverUrl={it.coverUrl} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -673,7 +647,7 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-7 md:gap-8">
               {jungguList.map((it, i) => (
-                <article key={it.img} onClick={() => setOpenPlaceholder({ ...it, placeholder: true, coverUrl: it.coverUrl ?? `/images/${it.img}.jpg` })}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
+                <article key={it.img} onClick={() => setOpenId(it.img)}  className="reveal group cursor-pointer" style={{ transitionDelay: `${(i%3)*100}ms` }}>
                   <div className="relative aspect-[4/5] overflow-hidden mb-4 rounded-sm bg-[hsl(var(--ink-faint))]">
                     <ArchImg base={it.img} alt={it.name} isNight={isNight} coverUrl={it.coverUrl} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
