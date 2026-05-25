@@ -20,6 +20,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          password_hash: string | null
           path_id: string
           pitch: number
           user_id: string | null
@@ -31,6 +32,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          password_hash?: string | null
           path_id: string
           pitch: number
           user_id?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          password_hash?: string | null
           path_id?: string
           pitch?: number
           user_id?: string | null
@@ -114,7 +117,59 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_around_comment: {
+        Args: { _id: string; _password: string }
+        Returns: boolean
+      }
+      insert_around_comment: {
+        Args: {
+          _content: string
+          _password: string
+          _path_id: string
+          _pitch: number
+          _user_name: string
+          _yaw: number
+        }
+        Returns: {
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          password_hash: string | null
+          path_id: string
+          pitch: number
+          user_id: string | null
+          user_name: string
+          yaw: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "around_view_comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      update_around_comment: {
+        Args: { _content: string; _id: string; _password: string }
+        Returns: {
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          password_hash: string | null
+          path_id: string
+          pitch: number
+          user_id: string | null
+          user_name: string
+          yaw: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "around_view_comments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

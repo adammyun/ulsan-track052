@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { X, MessageCircle } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface AroundComment {
   id: string;
@@ -96,7 +97,14 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [draft, setDraft] = useState<{ pitch: number; yaw: number } | null>(null);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editing, setEditing] = useState<AroundComment | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
@@ -108,7 +116,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const loadComments = useCallback(async () => {
     const { data, error } = await supabase
       .from("around_view_comments")
-      .select("*")
+      .select("id,path_id,user_name,avatar_url,pitch,yaw,content,created_at")
       .eq("path_id", pathId)
       .order("created_at", { ascending: true });
     if (error) {
@@ -187,29 +195,85 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
+    if (password && (password.length < 4 || password.length > 60)) {
+      toast({ title: "비밀번호는 4~60자여야 해요", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
-    const payload = {
-      path_id: pathId,
-      user_name: name.trim() || "익명의 여행자",
-      avatar_url: null,
-      pitch: draft.pitch,
-      yaw: draft.yaw,
-      content: text.trim().slice(0, 280),
-    };
-    const { data, error } = await supabase
-      .from("around_view_comments")
-      .insert(payload)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("insert_around_comment", {
+      _path_id: pathId,
+      _user_name: name.trim() || "익명의 여행자",
+      _pitch: draft.pitch,
+      _yaw: draft.yaw,
+      _content: text.trim().slice(0, 280),
+      _password: password || null,
+    });
     setSubmitting(false);
     if (error) {
       toast({ title: "코멘트 저장 실패", description: error.message, variant: "destructive" });
       return;
     }
-    setComments((prev) => [...prev, data as AroundComment]);
+    const inserted = Array.isArray(data) ? data[0] : data;
+    if (inserted) {
+      const { password_hash: _ph, ...safe } = inserted as Record<string, unknown>;
+      setComments((prev) => [...prev, safe as unknown as AroundComment]);
+    }
     setDraft(null);
     setText("");
+    setPassword("");
     toast({ title: "코멘트가 추가됐어요" });
+  };
+
+  const submitEdit = async () => {
+    if (!editing || !editText.trim()) return;
+    if (!editPassword) {
+      toast({ title: "비밀번호를 입력해주세요", variant: "destructive" });
+      return;
+    }
+    setActionLoading(true);
+    const { data, error } = await supabase.rpc("update_around_comment", {
+      _id: editing.id,
+      _password: editPassword,
+      _content: editText.trim().slice(0, 280),
+    });
+    setActionLoading(false);
+    if (error) {
+      toast({ title: "수정 실패", description: error.message, variant: "destructive" });
+      return;
+    }
+    const updated = Array.isArray(data) ? data[0] : data;
+    if (updated) {
+      const { password_hash: _ph, ...safe } = updated as Record<string, unknown>;
+      setComments((prev) => prev.map((c) => (c.id === editing.id ? (safe as unknown as AroundComment) : c)));
+      setActiveComment(safe as unknown as AroundComment);
+    }
+    setEditing(null);
+    setEditText("");
+    setEditPassword("");
+    toast({ title: "코멘트를 수정했어요" });
+  };
+
+  const submitDelete = async () => {
+    if (!deletingId) return;
+    if (!deletePassword) {
+      toast({ title: "비밀번호를 입력해주세요", variant: "destructive" });
+      return;
+    }
+    setActionLoading(true);
+    const { error } = await supabase.rpc("delete_around_comment", {
+      _id: deletingId,
+      _password: deletePassword,
+    });
+    setActionLoading(false);
+    if (error) {
+      toast({ title: "삭제 실패", description: error.message, variant: "destructive" });
+      return;
+    }
+    setComments((prev) => prev.filter((c) => c.id !== deletingId));
+    if (activeComment?.id === deletingId) setActiveComment(null);
+    setDeletingId(null);
+    setDeletePassword("");
+    toast({ title: "코멘트를 삭제했어요" });
   };
 
   return (
@@ -266,6 +330,29 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
                 <p className="font-serif-kr text-[15px] leading-[1.7] text-white break-words whitespace-pre-wrap">
                   {activeComment.content}
                 </p>
+                {!activeComment._dummy && (
+                  <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => {
+                        setEditing(activeComment);
+                        setEditText(activeComment.content);
+                        setEditPassword("");
+                      }}
+                      className="text-[10px] tracking-[0.2em] uppercase text-white/70 hover:text-white inline-flex items-center gap-1 px-2 py-1"
+                    >
+                      <Pencil className="w-3 h-3" /> 수정
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeletingId(activeComment.id);
+                        setDeletePassword("");
+                      }}
+                      className="text-[10px] tracking-[0.2em] uppercase text-red-300/80 hover:text-red-200 inline-flex items-center gap-1 px-2 py-1"
+                    >
+                      <Trash2 className="w-3 h-3" /> 삭제
+                    </button>
+                  </div>
+                )}
                 <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-stone-900/95 rotate-45 border-r border-b border-white/15" />
               </div>
             </motion.div>
@@ -311,6 +398,13 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
                   className="text-[13px] min-h-[72px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30 font-serif-kr"
                   autoFocus
                 />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value.slice(0, 60))}
+                  placeholder="수정/삭제용 비밀번호 (선택, 4~60자)"
+                  className="mt-2 h-8 text-[12px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+                />
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[10px] text-white/60 tabular-nums">
                     {text.length}/280
@@ -322,6 +416,119 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
                     className="h-7 text-[11px] tracking-[0.2em] uppercase bg-white text-stone-900 hover:bg-white/90"
                   >
                     {submitting ? "남기는 중…" : "남기기"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit modal overlay */}
+        <AnimatePresence>
+          {editing && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              onClick={() => setEditing(null)}
+            >
+              <div
+                className="w-[min(100%,28rem)] bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] tracking-[0.3em] text-white/70">EDIT COMMENT</p>
+                  <button onClick={() => setEditing(null)} className="text-white/70 hover:text-white" aria-label="닫기">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <Textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value.slice(0, 280))}
+                  className="text-[13px] min-h-[100px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30 font-serif-kr"
+                  autoFocus
+                />
+                <Input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value.slice(0, 60))}
+                  placeholder="작성 시 입력한 비밀번호"
+                  className="mt-2 h-9 text-[12px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+                />
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-[10px] text-white/60 tabular-nums">{editText.length}/280</span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditing(null)}
+                      className="h-8 text-[11px] tracking-[0.2em] uppercase text-white/80 hover:text-white hover:bg-white/10"
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={!editText.trim() || !editPassword || actionLoading}
+                      onClick={submitEdit}
+                      className="h-8 text-[11px] tracking-[0.2em] uppercase bg-white text-stone-900 hover:bg-white/90"
+                    >
+                      {actionLoading ? "수정 중…" : "수정"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete confirm overlay */}
+        <AnimatePresence>
+          {deletingId && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              onClick={() => setDeletingId(null)}
+            >
+              <div
+                className="w-[min(100%,24rem)] bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] tracking-[0.3em] text-red-300/90">DELETE COMMENT</p>
+                  <button onClick={() => setDeletingId(null)} className="text-white/70 hover:text-white" aria-label="닫기">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-[12px] text-white/80 mb-3 leading-relaxed">
+                  정말 이 코멘트를 삭제할까요? 삭제 후에는 되돌릴 수 없습니다.
+                </p>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value.slice(0, 60))}
+                  placeholder="작성 시 입력한 비밀번호"
+                  className="h-9 text-[12px] bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/30"
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2 mt-3">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeletingId(null)}
+                    className="h-8 text-[11px] tracking-[0.2em] uppercase text-white/80 hover:text-white hover:bg-white/10"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={!deletePassword || actionLoading}
+                    onClick={submitDelete}
+                    className="h-8 text-[11px] tracking-[0.2em] uppercase bg-red-500 text-white hover:bg-red-500/90"
+                  >
+                    {actionLoading ? "삭제 중…" : "삭제"}
                   </Button>
                 </div>
               </div>
