@@ -242,7 +242,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-4 md:bottom-6 w-[min(92%,28rem)] z-50 [filter:drop-shadow(0_12px_32px_rgba(0,0,0,0.7))]"
+              className="absolute left-1/2 -translate-x-1/2 bottom-3 md:bottom-6 w-[min(calc(100%-1.5rem),28rem)] z-50 [filter:drop-shadow(0_12px_32px_rgba(0,0,0,0.7))]"
             >
               <div className="relative bg-stone-900/95 backdrop-blur-md text-white rounded-2xl px-5 py-4 shadow-2xl border border-white/15 ring-1 ring-black/40">
                 <button
@@ -280,7 +280,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 16 }}
               transition={{ duration: 0.25 }}
-              className="absolute inset-x-3 bottom-3 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[420px] z-50"
+              className="absolute left-1/2 -translate-x-1/2 bottom-3 md:bottom-4 w-[min(calc(100%-1.5rem),26rem)] z-50 max-h-[calc(100%-1.5rem)] overflow-y-auto"
             >
               <div className="bg-stone-900/95 backdrop-blur-md rounded-lg p-4 shadow-2xl border border-white/15 ring-1 ring-black/40 text-white">
                 <div className="flex items-center justify-between mb-3">
