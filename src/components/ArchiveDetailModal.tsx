@@ -379,6 +379,8 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                     <AroundView
                       pathId={data.id}
                       panoramaUrl={data.around_view_url ?? undefined}
+                      panoramaUrlNight={data.around_view_url ? data.around_view_url.replace(/\.jpg$/i, "-night.jpg") : undefined}
+                      isNight={effectiveNight}
                       caption={`${data.name} · 360° around view (placeholder)`}
                     />
 

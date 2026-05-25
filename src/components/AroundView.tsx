@@ -27,6 +27,8 @@ interface AroundComment {
 interface Props {
   pathId: string;
   panoramaUrl?: string;
+  panoramaUrlNight?: string;
+  isNight?: boolean;
   caption?: string;
 }
 
@@ -83,7 +85,8 @@ const DUMMY_COMMENTS: AroundComment[] = [
   },
 ];
 
-export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
+export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNight = false, caption }: Props) {
+  const activePanorama = (isNight ? panoramaUrlNight : panoramaUrl) || panoramaUrl || panoramaUrlNight;
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
   const markersRef = useRef<MarkersPlugin | null>(null);
@@ -124,7 +127,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
     if (!containerRef.current) return;
     const viewer = new Viewer({
       container: containerRef.current,
-      panorama: panoramaUrl || PLACEHOLDER_PANO,
+      panorama: activePanorama || PLACEHOLDER_PANO,
       navbar: false,
       defaultZoomLvl: 0,
       mousewheel: false,
@@ -154,7 +157,7 @@ export default function AroundView({ pathId, panoramaUrl, caption }: Props) {
       viewerRef.current = null;
       markersRef.current = null;
     };
-  }, [panoramaUrl]);
+  }, [activePanorama]);
 
   // Sync markers
   useEffect(() => {
