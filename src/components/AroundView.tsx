@@ -215,8 +215,8 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     }
     const inserted = Array.isArray(data) ? data[0] : data;
     if (inserted) {
-      const { password_hash: _ph, ...safe } = inserted as Record<string, unknown>;
-      setComments((prev) => [...prev, safe as unknown as AroundComment]);
+      const safe = inserted as unknown as AroundComment;
+      setComments((prev) => [...prev, safe]);
     }
     setDraft(null);
     setText("");
@@ -243,9 +243,9 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     }
     const updated = Array.isArray(data) ? data[0] : data;
     if (updated) {
-      const { password_hash: _ph, ...safe } = updated as Record<string, unknown>;
-      setComments((prev) => prev.map((c) => (c.id === editing.id ? (safe as unknown as AroundComment) : c)));
-      setActiveComment(safe as unknown as AroundComment);
+      const safe = updated as unknown as AroundComment;
+      setComments((prev) => prev.map((c) => (c.id === editing.id ? safe : c)));
+      setActiveComment(safe);
     }
     setEditing(null);
     setEditText("");
