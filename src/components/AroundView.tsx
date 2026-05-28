@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Viewer } from "@photo-sphere-viewer/core";
-import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
-import "@photo-sphere-viewer/core/index.css";
-import "@photo-sphere-viewer/markers-plugin/index.css";
+import { useEffect, useMemo, useRef, useState, useCallback, type PointerEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,6 +31,15 @@ interface Props {
 
 const PLACEHOLDER_PANO =
   "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
+const TWO_PI = Math.PI * 2;
+const PANORAMA_STRIP_SCALE = 1.35;
+
+const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+const commentToPosition = (comment: AroundComment) => ({
+  x: clamp((((comment.yaw % TWO_PI) + TWO_PI) % TWO_PI) / TWO_PI),
+  y: clamp(0.5 - comment.pitch / Math.PI),
+});
 
 // 반응형/줄바꿈 확인용 더미 코멘트 (서로 다른 위치 & 길이)
 const DUMMY_COMMENTS: AroundComment[] = [
@@ -89,8 +94,8 @@ const DUMMY_COMMENTS: AroundComment[] = [
 export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNight = false, caption }: Props) {
   const activePanorama = (isNight ? panoramaUrlNight : panoramaUrl) || panoramaUrl || panoramaUrlNight;
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<Viewer | null>(null);
-  const markersRef = useRef<MarkersPlugin | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startPan: number; moved: boolean } | null>(null);
 
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
@@ -105,6 +110,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [pan, setPan] = useState(0.5);
 
   // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
