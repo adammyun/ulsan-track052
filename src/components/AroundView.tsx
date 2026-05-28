@@ -137,6 +137,10 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     loadComments();
   }, [loadComments]);
 
+  useEffect(() => {
+    setPan(0.5);
+  }, [activePanorama, pathId]);
+
   const markerItems = useMemo(
     () => effectiveComments.map((comment) => ({ comment, position: commentToPosition(comment) })),
     [effectiveComments],
