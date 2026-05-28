@@ -136,68 +136,19 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     loadComments();
   }, [loadComments]);
 
-  // Init viewer
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const viewer = new Viewer({
-      container: containerRef.current,
-      panorama: activePanorama || PLACEHOLDER_PANO,
-      navbar: false,
-      defaultZoomLvl: 0,
-      mousewheel: false,
-      plugins: [[MarkersPlugin, {}]],
-    });
-    viewerRef.current = viewer;
-    markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
+  const markerItems = useMemo(
+    () => effectiveComments.map((comment) => ({ comment, position: commentToPosition(comment) })),
+    [effectiveComments],
+  );
 
-    const onClick = (e: { data: { rightclick: boolean; pitch: number; yaw: number; target?: unknown } }) => {
-      if (e.data.rightclick) return;
-      setActiveComment(null);
-      setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
-    };
-    viewer.addEventListener("click", onClick as never);
-
-    const onSelect = ({ marker }: { marker: Marker }) => {
-      const c = (marker.config.data as { comment?: AroundComment } | undefined)?.comment;
-      if (c) {
-        setDraft(null);
-        setActiveComment(c);
-      }
-    };
-    markersRef.current.addEventListener("select-marker", onSelect as never);
-
-    return () => {
-      viewer.destroy();
-      viewerRef.current = null;
-      markersRef.current = null;
-    };
-  }, [activePanorama]);
-
-  // Sync markers
-  useEffect(() => {
-    const plugin = markersRef.current;
-    if (!plugin) return;
-    plugin.setMarkers(
-      effectiveComments.map((c) => ({
-        id: c.id,
-        position: { pitch: c.pitch, yaw: c.yaw },
-        html: `<div class="av-dot"><span class="av-dot-core"></span><span class="av-dot-ring"></span></div>`,
-        anchor: "center center",
-        tooltip: {
-          content: `<div class="flex items-center gap-2">
-            ${
-              c.avatar_url
-                ? `<img src="${c.avatar_url}" alt="" class="w-6 h-6 rounded-full object-cover" />`
-                : `<div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px] text-white">${c.user_name.charAt(0)}</div>`
-            }
-            <span class="text-xs text-white/90">${escapeHtml(c.user_name)}</span>
-          </div>`,
-          className: "av-tooltip",
-        },
-        data: { comment: c },
-      })),
-    );
-  }, [effectiveComments]);
+  const handlePanoramaClick = (event: PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = clamp((event.clientX - rect.left) / rect.width);
+    const y = clamp((event.clientY - rect.top) / rect.height);
+    setActiveComment(null);
+    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: x * TWO_PI });
+  };
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
