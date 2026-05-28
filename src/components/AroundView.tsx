@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Viewer } from "@photo-sphere-viewer/core";
-import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
-import "@photo-sphere-viewer/core/index.css";
-import "@photo-sphere-viewer/markers-plugin/index.css";
+import { useEffect, useMemo, useRef, useState, useCallback, type PointerEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,6 +31,15 @@ interface Props {
 
 const PLACEHOLDER_PANO =
   "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
+const TWO_PI = Math.PI * 2;
+const PANORAMA_STRIP_SCALE = 1.35;
+
+const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+
+const commentToPosition = (comment: AroundComment) => ({
+  x: clamp((((comment.yaw % TWO_PI) + TWO_PI) % TWO_PI) / TWO_PI),
+  y: clamp(0.5 - comment.pitch / Math.PI),
+});
 
 // 반응형/줄바꿈 확인용 더미 코멘트 (서로 다른 위치 & 길이)
 const DUMMY_COMMENTS: AroundComment[] = [
@@ -89,8 +94,9 @@ const DUMMY_COMMENTS: AroundComment[] = [
 export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNight = false, caption }: Props) {
   const activePanorama = (isNight ? panoramaUrlNight : panoramaUrl) || panoramaUrl || panoramaUrlNight;
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<Viewer | null>(null);
-  const markersRef = useRef<MarkersPlugin | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startPan: number; moved: boolean } | null>(null);
+  const ignoreClickRef = useRef(false);
 
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
@@ -105,6 +111,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [pan, setPan] = useState(0.5);
 
   // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
@@ -130,68 +137,51 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     loadComments();
   }, [loadComments]);
 
-  // Init viewer
   useEffect(() => {
-    if (!containerRef.current) return;
-    const viewer = new Viewer({
-      container: containerRef.current,
-      panorama: activePanorama || PLACEHOLDER_PANO,
-      navbar: false,
-      defaultZoomLvl: 0,
-      mousewheel: false,
-      plugins: [[MarkersPlugin, {}]],
-    });
-    viewerRef.current = viewer;
-    markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
+    setPan(0.5);
+  }, [activePanorama, pathId]);
 
-    const onClick = (e: { data: { rightclick: boolean; pitch: number; yaw: number; target?: unknown } }) => {
-      if (e.data.rightclick) return;
-      setActiveComment(null);
-      setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
-    };
-    viewer.addEventListener("click", onClick as never);
+  const markerItems = useMemo(
+    () => effectiveComments.map((comment) => ({ comment, position: commentToPosition(comment) })),
+    [effectiveComments],
+  );
 
-    const onSelect = ({ marker }: { marker: Marker }) => {
-      const c = (marker.config.data as { comment?: AroundComment } | undefined)?.comment;
-      if (c) {
-        setDraft(null);
-        setActiveComment(c);
-      }
-    };
-    markersRef.current.addEventListener("select-marker", onSelect as never);
+  const handlePanoramaClick = (event: PointerEvent<HTMLDivElement>) => {
+    if (ignoreClickRef.current) {
+      ignoreClickRef.current = false;
+      return;
+    }
+    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = clamp((event.clientX - rect.left) / rect.width);
+    const y = clamp((event.clientY - rect.top) / rect.height);
+    const imageX = clamp((x + pan * (PANORAMA_STRIP_SCALE - 1)) / PANORAMA_STRIP_SCALE);
+    setActiveComment(null);
+    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: imageX * TWO_PI });
+  };
 
-    return () => {
-      viewer.destroy();
-      viewerRef.current = null;
-      markersRef.current = null;
-    };
-  }, [activePanorama]);
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { startX: event.clientX, startPan: pan, moved: false };
+  };
 
-  // Sync markers
-  useEffect(() => {
-    const plugin = markersRef.current;
-    if (!plugin) return;
-    plugin.setMarkers(
-      effectiveComments.map((c) => ({
-        id: c.id,
-        position: { pitch: c.pitch, yaw: c.yaw },
-        html: `<div class="av-dot"><span class="av-dot-core"></span><span class="av-dot-ring"></span></div>`,
-        anchor: "center center",
-        tooltip: {
-          content: `<div class="flex items-center gap-2">
-            ${
-              c.avatar_url
-                ? `<img src="${c.avatar_url}" alt="" class="w-6 h-6 rounded-full object-cover" />`
-                : `<div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-[10px] text-white">${c.user_name.charAt(0)}</div>`
-            }
-            <span class="text-xs text-white/90">${escapeHtml(c.user_name)}</span>
-          </div>`,
-          className: "av-tooltip",
-        },
-        data: { comment: c },
-      })),
-    );
-  }, [effectiveComments]);
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const width = event.currentTarget.getBoundingClientRect().width || 1;
+    const delta = (event.clientX - drag.startX) / width;
+    if (Math.abs(event.clientX - drag.startX) > 5) drag.moved = true;
+    setPan(clamp(drag.startPan - delta));
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.moved) ignoreClickRef.current = true;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
@@ -287,9 +277,56 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
 
       {/* 바깥 컨테이너는 overflow-visible — 말풍선/입력창이 잘리지 않도록 */}
       <div className="relative aspect-[16/9] md:aspect-[2/1]">
-        {/* 뷰어 캔버스만 클리핑 */}
-        <div className="absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]">
-          <div ref={containerRef} className="absolute inset-0" />
+        {/* 파노라마 스트립 — 구면 왜곡 대신 넓은 사진을 부드럽게 좌우 탐색 */}
+        <div
+          ref={containerRef}
+          className="absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] cursor-grab active:cursor-grabbing touch-pan-y select-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onClick={handlePanoramaClick}
+        >
+          <div
+            ref={stripRef}
+            className="absolute inset-y-0 left-0 will-change-transform"
+            style={{
+              width: `${PANORAMA_STRIP_SCALE * 100}%`,
+              transform: `translateX(-${pan * ((PANORAMA_STRIP_SCALE - 1) / PANORAMA_STRIP_SCALE) * 100}%)`,
+              transition: dragRef.current ? "none" : "transform 420ms cubic-bezier(.22,1,.36,1)",
+            }}
+          >
+            <img
+              src={activePanorama || PLACEHOLDER_PANO}
+              alt="어라운드뷰 파노라마"
+              draggable={false}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-transparent to-black/28 pointer-events-none" />
+            {markerItems.map(({ comment, position }) => (
+              <button
+                key={comment.id}
+                type="button"
+                data-comment-marker
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setDraft(null);
+                  setActiveComment(comment);
+                }}
+                className="av-note-marker group"
+                style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%` }}
+                aria-label={`${comment.user_name} 코멘트 보기`}
+              >
+                <span className="av-note-pin" />
+                <span className="av-note-label">
+                  <span className="av-note-avatar">
+                    {comment.avatar_url ? <img src={comment.avatar_url} alt="" /> : comment.user_name.charAt(0)}
+                  </span>
+                  <span className="av-note-text">코멘트</span>
+                </span>
+              </button>
+            ))}
+          </div>
 
           {comments.length === 0 && (
             <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
@@ -541,52 +578,6 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
         <p className="mt-3 text-[11px] text-ink-light italic">{caption}</p>
       )}
 
-      <style>{`
-        .av-dot {
-          position: relative;
-          width: 14px;
-          height: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-        .av-dot-core {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          border-radius: 9999px;
-          background: hsl(var(--accent));
-          box-shadow: 0 0 12px hsl(var(--accent) / 0.9), 0 0 2px rgba(255,255,255,0.9);
-        }
-        .av-dot-ring {
-          position: absolute;
-          width: 22px;
-          height: 22px;
-          border-radius: 9999px;
-          border: 1px solid hsl(var(--accent) / 0.6);
-          opacity: 0.7;
-          animation: avPulse 2.4s ease-out infinite;
-        }
-        @keyframes avPulse {
-          0% { transform: scale(0.6); opacity: 0.8; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        .av-tooltip {
-          background: rgba(15, 15, 18, 0.92) !important;
-          color: #fff !important;
-          border-radius: 8px !important;
-          padding: 6px 10px !important;
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.08) !important;
-        }
-      `}</style>
     </section>
-  );
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string),
   );
 }
