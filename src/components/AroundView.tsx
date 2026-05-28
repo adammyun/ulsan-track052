@@ -96,6 +96,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const containerRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startPan: number; moved: boolean } | null>(null);
+  const ignoreClickRef = useRef(false);
 
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
@@ -142,12 +143,39 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   );
 
   const handlePanoramaClick = (event: PointerEvent<HTMLDivElement>) => {
+    if (ignoreClickRef.current) {
+      ignoreClickRef.current = false;
+      return;
+    }
     if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const x = clamp((event.clientX - rect.left) / rect.width);
     const y = clamp((event.clientY - rect.top) / rect.height);
     setActiveComment(null);
     setDraft({ pitch: (0.5 - y) * Math.PI, yaw: x * TWO_PI });
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { startX: event.clientX, startPan: pan, moved: false };
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const width = event.currentTarget.getBoundingClientRect().width || 1;
+    const delta = (event.clientX - drag.startX) / width;
+    if (Math.abs(event.clientX - drag.startX) > 5) drag.moved = true;
+    setPan(clamp(drag.startPan - delta));
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current?.moved) ignoreClickRef.current = true;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   const submitComment = async () => {
