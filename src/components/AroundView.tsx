@@ -573,52 +573,6 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
         <p className="mt-3 text-[11px] text-ink-light italic">{caption}</p>
       )}
 
-      <style>{`
-        .av-dot {
-          position: relative;
-          width: 14px;
-          height: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-        .av-dot-core {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          border-radius: 9999px;
-          background: hsl(var(--accent));
-          box-shadow: 0 0 12px hsl(var(--accent) / 0.9), 0 0 2px rgba(255,255,255,0.9);
-        }
-        .av-dot-ring {
-          position: absolute;
-          width: 22px;
-          height: 22px;
-          border-radius: 9999px;
-          border: 1px solid hsl(var(--accent) / 0.6);
-          opacity: 0.7;
-          animation: avPulse 2.4s ease-out infinite;
-        }
-        @keyframes avPulse {
-          0% { transform: scale(0.6); opacity: 0.8; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        .av-tooltip {
-          background: rgba(15, 15, 18, 0.92) !important;
-          color: #fff !important;
-          border-radius: 8px !important;
-          padding: 6px 10px !important;
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.08) !important;
-        }
-      `}</style>
     </section>
-  );
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string),
   );
 }
