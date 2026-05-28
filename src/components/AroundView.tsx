@@ -151,8 +151,9 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     const rect = event.currentTarget.getBoundingClientRect();
     const x = clamp((event.clientX - rect.left) / rect.width);
     const y = clamp((event.clientY - rect.top) / rect.height);
+    const imageX = clamp((x + pan * (PANORAMA_STRIP_SCALE - 1)) / PANORAMA_STRIP_SCALE);
     setActiveComment(null);
-    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: x * TWO_PI });
+    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: imageX * TWO_PI });
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
