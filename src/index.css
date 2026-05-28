@@ -115,38 +115,40 @@
 @layer components {
   .av-dot {
     position: relative;
-    width: 22px;
-    height: 22px;
+    width: 34px;
+    height: 34px;
     display: block;
     cursor: pointer;
     transform: translateZ(0);
   }
   .av-dot-core {
     position: absolute;
-    inset: 6px;
+    inset: 9px;
     border-radius: 9999px;
-    background: hsl(var(--accent));
+    background: #ff4d2e;
     box-shadow:
-      0 0 0 2px rgba(255, 255, 255, 0.95),
-      0 2px 8px rgba(0, 0, 0, 0.55);
+      0 0 0 3px #ffffff,
+      0 0 0 5px rgba(0, 0, 0, 0.55),
+      0 0 18px 4px rgba(255, 77, 46, 0.85),
+      0 4px 12px rgba(0, 0, 0, 0.7);
     z-index: 2;
   }
   .av-dot-ring {
     position: absolute;
     inset: 0;
     border-radius: 9999px;
-    background: hsl(var(--accent) / 0.45);
+    background: rgba(255, 77, 46, 0.55);
     animation: av-pulse 1.8s cubic-bezier(.4,0,.2,1) infinite;
     z-index: 1;
   }
   .av-dot:hover .av-dot-core {
-    transform: scale(1.15);
+    transform: scale(1.2);
     transition: transform 0.18s ease;
   }
   @keyframes av-pulse {
-    0%   { transform: scale(0.6); opacity: 0.9; }
-    70%  { transform: scale(1.8); opacity: 0; }
-    100% { transform: scale(1.8); opacity: 0; }
+    0%   { transform: scale(0.7); opacity: 1; }
+    70%  { transform: scale(2.2); opacity: 0; }
+    100% { transform: scale(2.2); opacity: 0; }
   }
 
   .av-tooltip .psv-tooltip-content {
