@@ -26,6 +26,7 @@ interface PathRow {
   latitude: number;
   longitude: number;
   cover_image: string;
+  around_view_url: string | null;
   content: PathContent;
   goods_url: string | null;
   goods_type: string;
@@ -34,6 +35,11 @@ interface PathRow {
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const } },
+};
+
+const isNightHour = (d = new Date()) => {
+  const h = d.getHours();
+  return h < 6 || h >= 18;
 };
 
 export default function ArchiveDetail() {
@@ -193,7 +199,13 @@ export default function ArchiveDetail() {
             )}
 
             {/* Around View */}
-            <AroundView pathId={data.id} caption={`${data.name} · 360° around view (placeholder)`} />
+            <AroundView
+              pathId={data.id}
+              panoramaUrl={data.around_view_url ?? undefined}
+              panoramaUrlNight={data.around_view_url ? data.around_view_url.replace(/\.jpg$/i, "-night.jpg") : undefined}
+              isNight={isNightHour()}
+              caption={`${data.name} · around view`}
+            />
 
             {/* Arrival */}
             <motion.div
