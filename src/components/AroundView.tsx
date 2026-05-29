@@ -145,26 +145,14 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     viewerRef.current = viewer;
     markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
 
-    const handleClick = (_: unknown, data: { rightclick: boolean; yaw: number; pitch: number; target: HTMLElement | null }) => {
-      if (data.rightclick) return;
-      // 마커 클릭은 select-marker가 따로 처리
-      if (data.target && data.target.closest?.(".psv-marker")) return;
+    const handleClick = (e: { data: { rightclick: boolean; yaw: number; pitch: number; target: HTMLElement | null } }) => {
+      if (e.data.rightclick) return;
+      if (e.data.target && (e.data.target as HTMLElement).closest?.(".psv-marker")) return;
       setActiveComment(null);
-      setDraft({ pitch: data.pitch, yaw: data.yaw });
+      setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
     };
-    const handleSelect = (_: unknown, marker: Marker) => {
-      const id = marker.id;
-      const found =
-        DUMMY_COMMENTS.find((c) => c.id === id) ||
-        // 최신 comments는 클로저 대신 setState 콜백으로 조회 어렵 -> querySelector 우회
-        null;
-      if (found) {
-        setDraft(null);
-        setActiveComment(found);
-        return;
-      }
-      // 사용자 코멘트: data 속성에서 직접 가져오기
-      const data = (marker.data ?? {}) as { comment?: AroundComment };
+    const handleSelect = (e: { marker: Marker }) => {
+      const data = (e.marker.data ?? {}) as { comment?: AroundComment };
       if (data.comment) {
         setDraft(null);
         setActiveComment(data.comment);
