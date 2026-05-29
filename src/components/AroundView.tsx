@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useCallback, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Viewer } from "@photo-sphere-viewer/core";
+import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
+import "@photo-sphere-viewer/core/index.css";
+import "@photo-sphere-viewer/markers-plugin/index.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,15 +35,6 @@ interface Props {
 
 const PLACEHOLDER_PANO =
   "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
-const TWO_PI = Math.PI * 2;
-const PANORAMA_STRIP_SCALE = 1.35;
-
-const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
-
-const commentToPosition = (comment: AroundComment) => ({
-  x: clamp((((comment.yaw % TWO_PI) + TWO_PI) % TWO_PI) / TWO_PI),
-  y: clamp(0.5 - comment.pitch / Math.PI),
-});
 
 // 반응형/줄바꿈 확인용 더미 코멘트 (서로 다른 위치 & 길이)
 const DUMMY_COMMENTS: AroundComment[] = [
@@ -94,9 +89,8 @@ const DUMMY_COMMENTS: AroundComment[] = [
 export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNight = false, caption }: Props) {
   const activePanorama = (isNight ? panoramaUrlNight : panoramaUrl) || panoramaUrl || panoramaUrlNight;
   const containerRef = useRef<HTMLDivElement>(null);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startX: number; startPan: number; moved: boolean } | null>(null);
-  const ignoreClickRef = useRef(false);
+  const viewerRef = useRef<Viewer | null>(null);
+  const markersRef = useRef<MarkersPlugin | null>(null);
 
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
@@ -111,7 +105,6 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [pan, setPan] = useState(0.5);
 
   // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
@@ -137,51 +130,87 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     loadComments();
   }, [loadComments]);
 
+  // ── Photo Sphere Viewer 초기화 ──────────────────────────────
   useEffect(() => {
-    setPan(0.5);
-  }, [activePanorama, pathId]);
+    if (!containerRef.current) return;
+    const viewer = new Viewer({
+      container: containerRef.current,
+      panorama: activePanorama || PLACEHOLDER_PANO,
+      navbar: false,
+      defaultZoomLvl: 30,
+      mousewheel: false,
+      touchmoveTwoFingers: false,
+      plugins: [[MarkersPlugin, {}]],
+    });
+    viewerRef.current = viewer;
+    markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
 
-  const markerItems = useMemo(
-    () => effectiveComments.map((comment) => ({ comment, position: commentToPosition(comment) })),
-    [effectiveComments],
-  );
+    const handleClick = (_: unknown, data: { rightclick: boolean; yaw: number; pitch: number; target: HTMLElement | null }) => {
+      if (data.rightclick) return;
+      // 마커 클릭은 select-marker가 따로 처리
+      if (data.target && data.target.closest?.(".psv-marker")) return;
+      setActiveComment(null);
+      setDraft({ pitch: data.pitch, yaw: data.yaw });
+    };
+    const handleSelect = (_: unknown, marker: Marker) => {
+      const id = marker.id;
+      const found =
+        DUMMY_COMMENTS.find((c) => c.id === id) ||
+        // 최신 comments는 클로저 대신 setState 콜백으로 조회 어렵 -> querySelector 우회
+        null;
+      if (found) {
+        setDraft(null);
+        setActiveComment(found);
+        return;
+      }
+      // 사용자 코멘트: data 속성에서 직접 가져오기
+      const data = (marker.data ?? {}) as { comment?: AroundComment };
+      if (data.comment) {
+        setDraft(null);
+        setActiveComment(data.comment);
+      }
+    };
+    viewer.addEventListener("click", handleClick as never);
+    markersRef.current.addEventListener("select-marker", handleSelect as never);
 
-  const handlePanoramaClick = (event: PointerEvent<HTMLDivElement>) => {
-    if (ignoreClickRef.current) {
-      ignoreClickRef.current = false;
-      return;
-    }
-    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = clamp((event.clientX - rect.left) / rect.width);
-    const y = clamp((event.clientY - rect.top) / rect.height);
-    const imageX = clamp((x + pan * (PANORAMA_STRIP_SCALE - 1)) / PANORAMA_STRIP_SCALE);
-    setActiveComment(null);
-    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: imageX * TWO_PI });
-  };
+    return () => {
+      viewer.destroy();
+      viewerRef.current = null;
+      markersRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = { startX: event.clientX, startPan: pan, moved: false };
-  };
+  // 파노라마 교체
+  useEffect(() => {
+    const v = viewerRef.current;
+    if (!v) return;
+    v.setPanorama(activePanorama || PLACEHOLDER_PANO, { showLoader: true }).catch(() => {});
+  }, [activePanorama]);
 
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const width = event.currentTarget.getBoundingClientRect().width || 1;
-    const delta = (event.clientX - drag.startX) / width;
-    if (Math.abs(event.clientX - drag.startX) > 5) drag.moved = true;
-    setPan(clamp(drag.startPan - delta));
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (dragRef.current?.moved) ignoreClickRef.current = true;
-    dragRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
+  // 마커 동기화
+  useEffect(() => {
+    const m = markersRef.current;
+    if (!m) return;
+    const html = `
+      <div class="av-dot" aria-label="코멘트">
+        <span class="av-dot-pulse"></span>
+        <span class="av-dot-outline"></span>
+        <span class="av-dot-ring"></span>
+        <span class="av-dot-core"></span>
+      </div>`;
+    m.setMarkers(
+      effectiveComments.map((c) => ({
+        id: c.id,
+        position: { yaw: c.yaw, pitch: c.pitch },
+        html,
+        anchor: "center center",
+        size: { width: 26, height: 26 },
+        zIndex: 100,
+        data: { comment: c },
+      })),
+    );
+  }, [effectiveComments]);
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
