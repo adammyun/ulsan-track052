@@ -133,6 +133,9 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   // ── Photo Sphere Viewer 초기화 ──────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
+    // Avoid re-initializing on React StrictMode remount
+    if (viewerRef.current) return;
+
     const viewer = new Viewer({
       container: containerRef.current,
       panorama: activePanorama || PLACEHOLDER_PANO,
@@ -162,9 +165,17 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     markersRef.current.addEventListener("select-marker", handleSelect as never);
 
     return () => {
-      viewer.destroy();
-      viewerRef.current = null;
-      markersRef.current = null;
+      // Defer destroy so StrictMode's mount→unmount→mount cycle does NOT
+      // abort the in-flight panorama fetch. Only destroy on a real unmount
+      // (i.e. the container element is no longer mounted).
+      setTimeout(() => {
+        if (containerRef.current) return; // remounted — keep viewer
+        try { viewer.destroy(); } catch { /* noop */ }
+        if (viewerRef.current === viewer) {
+          viewerRef.current = null;
+          markersRef.current = null;
+        }
+      }, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -173,6 +184,9 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   useEffect(() => {
     const v = viewerRef.current;
     if (!v) return;
+    // Skip if viewer already has this panorama (avoid aborting initial load)
+    const current = (v as unknown as { config?: { panorama?: unknown } }).config?.panorama;
+    if (current === activePanorama) return;
     v.setPanorama(activePanorama || PLACEHOLDER_PANO, { showLoader: true }).catch(() => {});
   }, [activePanorama]);
 
