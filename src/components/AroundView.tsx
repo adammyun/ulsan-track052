@@ -133,7 +133,9 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   // ── Photo Sphere Viewer 초기화 ──────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
-    let cancelled = false;
+    // Avoid re-initializing on React StrictMode remount
+    if (viewerRef.current) return;
+
     const viewer = new Viewer({
       container: containerRef.current,
       panorama: activePanorama || PLACEHOLDER_PANO,
@@ -163,16 +165,15 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     markersRef.current.addEventListener("select-marker", handleSelect as never);
 
     return () => {
-      // Defer destroy so React StrictMode's mount→unmount→mount cycle
-      // doesn't abort the panorama fetch. If a new viewer has taken over
-      // viewerRef by the next tick, skip destroying it here.
+      // Defer destroy so StrictMode's mount→unmount→mount cycle does NOT
+      // abort the in-flight panorama fetch. Only destroy on a real unmount
+      // (i.e. the container element is no longer mounted).
       setTimeout(() => {
+        if (containerRef.current) return; // remounted — keep viewer
+        try { viewer.destroy(); } catch { /* noop */ }
         if (viewerRef.current === viewer) {
-          try { viewer.destroy(); } catch { /* noop */ }
           viewerRef.current = null;
           markersRef.current = null;
-        } else {
-          try { viewer.destroy(); } catch { /* noop */ }
         }
       }, 0);
     };
