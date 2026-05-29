@@ -316,11 +316,6 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
             <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
           </div>
         )}
-        {false && (
-            <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
-              <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
-            </div>
-          )}
 
         {/* Speech bubble for active comment — 뷰어 위에 떠 있고, 잘리지 않음 */}
         <AnimatePresence>
