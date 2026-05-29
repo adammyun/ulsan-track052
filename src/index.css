@@ -111,82 +111,58 @@
   .animate-slide-in-l { animation: slide-in-l .35s cubic-bezier(.22,1,.36,1) forwards; }
 }
 
-/* Around View — comment marker badge */
+/* Around View — spherical marker dot (black outline · white ring · accent core) */
 @layer components {
-  .av-note-marker {
-    position: absolute;
-    transform: translate(-50%, -100%);
-    z-index: 4;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: hsl(45 30% 97%);
-    filter: drop-shadow(0 10px 18px hsl(0 0% 0% / 0.55));
+  .av-dot {
+    position: relative;
+    width: 26px;
+    height: 26px;
     cursor: pointer;
+    pointer-events: auto;
   }
-  .av-note-pin {
-    width: 18px;
-    height: 18px;
-    border-radius: 9999px 9999px 9999px 0;
-    transform: rotate(-45deg);
-    background: hsl(50 100% 55%);
-    border: 3px solid hsl(0 0% 100%);
-    box-shadow:
-      0 0 0 2px hsl(0 0% 0% / 0.45),
-      0 0 24px hsl(50 100% 55% / 0.75);
-  }
-  .av-note-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 28px;
-    padding: 4px 9px 4px 5px;
+  .av-dot-outline,
+  .av-dot-ring,
+  .av-dot-core,
+  .av-dot-pulse {
+    position: absolute;
+    inset: 0;
     border-radius: 9999px;
-    background: hsl(0 0% 0% / 0.78);
-    border: 1px solid hsl(0 0% 100% / 0.55);
-    backdrop-filter: blur(10px);
-    white-space: nowrap;
   }
-  .av-note-avatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: hsl(50 100% 55%);
-    color: hsl(40 8% 10%);
-    font-size: 10px;
-    font-weight: 700;
+  /* 1) 검은 외곽선 */
+  .av-dot-outline {
+    background: hsl(0 0% 0%);
+    box-shadow: 0 4px 14px hsl(0 0% 0% / 0.55);
   }
-  .av-note-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  /* 2) 흰 선 */
+  .av-dot-ring {
+    inset: 3px;
+    background: hsl(0 0% 100%);
   }
-  .av-note-text {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+  /* 3) 안쪽 메인 컬러 (낮/밤 accent) */
+  .av-dot-core {
+    inset: 6px;
+    background: hsl(var(--accent));
+    box-shadow: inset 0 0 4px hsl(0 0% 0% / 0.35);
   }
-  .av-note-marker:hover,
-  .av-note-marker:focus-visible {
-    z-index: 6;
+  /* 펄스 */
+  .av-dot-pulse {
+    inset: 0;
+    background: hsl(var(--accent) / 0.55);
+    animation: av-pulse 1.8s ease-out infinite;
+    pointer-events: none;
   }
-  .av-note-marker:hover .av-note-label,
-  .av-note-marker:focus-visible .av-note-label {
-    background: hsl(0 0% 0% / 0.92);
-    border-color: hsl(50 100% 70% / 0.9);
+  @keyframes av-pulse {
+    0%   { transform: scale(0.7); opacity: 0.75; }
+    80%  { transform: scale(2.0); opacity: 0; }
+    100% { transform: scale(2.0); opacity: 0; }
   }
-  .av-note-marker:hover .av-note-pin,
-  .av-note-marker:focus-visible .av-note-pin {
+  .av-dot:hover .av-dot-core,
+  .av-dot:focus-visible .av-dot-core {
     box-shadow:
-      0 0 0 3px hsl(0 0% 100% / 0.95),
-      0 0 0 6px hsl(0 0% 0% / 0.5),
-      0 0 32px hsl(50 100% 55% / 0.9);
+      inset 0 0 4px hsl(0 0% 0% / 0.35),
+      0 0 0 1px hsl(var(--accent) / 0.5);
   }
+
+  /* PSV container baseline */
+  .av-psv-container .psv-container { background: hsl(0 0% 0%); }
 }
