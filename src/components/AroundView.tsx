@@ -163,16 +163,18 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     markersRef.current.addEventListener("select-marker", handleSelect as never);
 
     return () => {
-      cancelled = true;
-      // Defer destroy so StrictMode's double-invoke doesn't abort the panorama fetch
-      queueMicrotask(() => {
-        if (!cancelled) return;
-        try { viewer.destroy(); } catch { /* noop */ }
+      // Defer destroy so React StrictMode's mount→unmount→mount cycle
+      // doesn't abort the panorama fetch. If a new viewer has taken over
+      // viewerRef by the next tick, skip destroying it here.
+      setTimeout(() => {
         if (viewerRef.current === viewer) {
+          try { viewer.destroy(); } catch { /* noop */ }
           viewerRef.current = null;
           markersRef.current = null;
+        } else {
+          try { viewer.destroy(); } catch { /* noop */ }
         }
-      });
+      }, 0);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
