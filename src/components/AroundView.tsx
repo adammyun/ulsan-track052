@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useCallback, type PointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Viewer } from "@photo-sphere-viewer/core";
+import { MarkersPlugin, type Marker } from "@photo-sphere-viewer/markers-plugin";
+import "@photo-sphere-viewer/core/index.css";
+import "@photo-sphere-viewer/markers-plugin/index.css";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,15 +35,6 @@ interface Props {
 
 const PLACEHOLDER_PANO =
   "https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg";
-const TWO_PI = Math.PI * 2;
-const PANORAMA_STRIP_SCALE = 1.35;
-
-const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
-
-const commentToPosition = (comment: AroundComment) => ({
-  x: clamp((((comment.yaw % TWO_PI) + TWO_PI) % TWO_PI) / TWO_PI),
-  y: clamp(0.5 - comment.pitch / Math.PI),
-});
 
 // 반응형/줄바꿈 확인용 더미 코멘트 (서로 다른 위치 & 길이)
 const DUMMY_COMMENTS: AroundComment[] = [
@@ -94,9 +89,8 @@ const DUMMY_COMMENTS: AroundComment[] = [
 export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNight = false, caption }: Props) {
   const activePanorama = (isNight ? panoramaUrlNight : panoramaUrl) || panoramaUrl || panoramaUrlNight;
   const containerRef = useRef<HTMLDivElement>(null);
-  const stripRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ startX: number; startPan: number; moved: boolean } | null>(null);
-  const ignoreClickRef = useRef(false);
+  const viewerRef = useRef<Viewer | null>(null);
+  const markersRef = useRef<MarkersPlugin | null>(null);
 
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
@@ -111,7 +105,6 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  const [pan, setPan] = useState(0.5);
 
   // 더미 예시 코멘트는 항상 유지하고, 사용자 코멘트는 누적해서 함께 렌더링
   const effectiveComments = useMemo<AroundComment[]>(
@@ -137,51 +130,75 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     loadComments();
   }, [loadComments]);
 
+  // ── Photo Sphere Viewer 초기화 ──────────────────────────────
   useEffect(() => {
-    setPan(0.5);
-  }, [activePanorama, pathId]);
+    if (!containerRef.current) return;
+    const viewer = new Viewer({
+      container: containerRef.current,
+      panorama: activePanorama || PLACEHOLDER_PANO,
+      navbar: false,
+      defaultZoomLvl: 30,
+      mousewheel: false,
+      touchmoveTwoFingers: false,
+      plugins: [[MarkersPlugin, {}]],
+    });
+    viewerRef.current = viewer;
+    markersRef.current = viewer.getPlugin(MarkersPlugin) as MarkersPlugin;
 
-  const markerItems = useMemo(
-    () => effectiveComments.map((comment) => ({ comment, position: commentToPosition(comment) })),
-    [effectiveComments],
-  );
+    const handleClick = (e: { data: { rightclick: boolean; yaw: number; pitch: number; target: HTMLElement | null } }) => {
+      if (e.data.rightclick) return;
+      if (e.data.target && (e.data.target as HTMLElement).closest?.(".psv-marker")) return;
+      setActiveComment(null);
+      setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
+    };
+    const handleSelect = (e: { marker: Marker }) => {
+      const data = (e.marker.data ?? {}) as { comment?: AroundComment };
+      if (data.comment) {
+        setDraft(null);
+        setActiveComment(data.comment);
+      }
+    };
+    viewer.addEventListener("click", handleClick as never);
+    markersRef.current.addEventListener("select-marker", handleSelect as never);
 
-  const handlePanoramaClick = (event: PointerEvent<HTMLDivElement>) => {
-    if (ignoreClickRef.current) {
-      ignoreClickRef.current = false;
-      return;
-    }
-    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = clamp((event.clientX - rect.left) / rect.width);
-    const y = clamp((event.clientY - rect.top) / rect.height);
-    const imageX = clamp((x + pan * (PANORAMA_STRIP_SCALE - 1)) / PANORAMA_STRIP_SCALE);
-    setActiveComment(null);
-    setDraft({ pitch: (0.5 - y) * Math.PI, yaw: imageX * TWO_PI });
-  };
+    return () => {
+      viewer.destroy();
+      viewerRef.current = null;
+      markersRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("[data-comment-marker]")) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = { startX: event.clientX, startPan: pan, moved: false };
-  };
+  // 파노라마 교체
+  useEffect(() => {
+    const v = viewerRef.current;
+    if (!v) return;
+    v.setPanorama(activePanorama || PLACEHOLDER_PANO, { showLoader: true }).catch(() => {});
+  }, [activePanorama]);
 
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const width = event.currentTarget.getBoundingClientRect().width || 1;
-    const delta = (event.clientX - drag.startX) / width;
-    if (Math.abs(event.clientX - drag.startX) > 5) drag.moved = true;
-    setPan(clamp(drag.startPan - delta));
-  };
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    if (dragRef.current?.moved) ignoreClickRef.current = true;
-    dragRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  };
+  // 마커 동기화
+  useEffect(() => {
+    const m = markersRef.current;
+    if (!m) return;
+    const html = `
+      <div class="av-dot" aria-label="코멘트">
+        <span class="av-dot-pulse"></span>
+        <span class="av-dot-outline"></span>
+        <span class="av-dot-ring"></span>
+        <span class="av-dot-core"></span>
+      </div>`;
+    m.setMarkers(
+      effectiveComments.map((c) => ({
+        id: c.id,
+        position: { yaw: c.yaw, pitch: c.pitch },
+        html,
+        anchor: "center center",
+        size: { width: 26, height: 26 },
+        zIndex: 100,
+        data: { comment: c },
+      })),
+    );
+  }, [effectiveComments]);
 
   const submitComment = async () => {
     if (!draft || !text.trim()) return;
@@ -277,63 +294,16 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
 
       {/* 바깥 컨테이너는 overflow-visible — 말풍선/입력창이 잘리지 않도록 */}
       <div className="relative aspect-[16/9] md:aspect-[2/1]">
-        {/* 파노라마 스트립 — 구면 왜곡 대신 넓은 사진을 부드럽게 좌우 탐색 */}
+        {/* 구면 파노라마 뷰어 */}
         <div
           ref={containerRef}
-          className="absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] cursor-grab active:cursor-grabbing touch-pan-y select-none"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onClick={handlePanoramaClick}
-        >
-          <div
-            ref={stripRef}
-            className="absolute inset-y-0 left-0 will-change-transform"
-            style={{
-              width: `${PANORAMA_STRIP_SCALE * 100}%`,
-              transform: `translateX(-${pan * ((PANORAMA_STRIP_SCALE - 1) / PANORAMA_STRIP_SCALE) * 100}%)`,
-              transition: dragRef.current ? "none" : "transform 420ms cubic-bezier(.22,1,.36,1)",
-            }}
-          >
-            <img
-              src={activePanorama || PLACEHOLDER_PANO}
-              alt="어라운드뷰 파노라마"
-              draggable={false}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-transparent to-black/28 pointer-events-none" />
-            {markerItems.map(({ comment, position }) => (
-              <button
-                key={comment.id}
-                type="button"
-                data-comment-marker
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setDraft(null);
-                  setActiveComment(comment);
-                }}
-                className="av-note-marker group"
-                style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%` }}
-                aria-label={`${comment.user_name} 코멘트 보기`}
-              >
-                <span className="av-note-pin" />
-                <span className="av-note-label">
-                  <span className="av-note-avatar">
-                    {comment.avatar_url ? <img src={comment.avatar_url} alt="" /> : comment.user_name.charAt(0)}
-                  </span>
-                  <span className="av-note-text">코멘트</span>
-                </span>
-              </button>
-            ))}
+          className="av-psv-container absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]"
+        />
+        {comments.length === 0 && (
+          <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2 z-10">
+            <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
           </div>
-
-          {comments.length === 0 && (
-            <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
-              <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Speech bubble for active comment — 뷰어 위에 떠 있고, 잘리지 않음 */}
         <AnimatePresence>
