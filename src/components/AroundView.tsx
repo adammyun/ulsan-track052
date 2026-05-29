@@ -306,63 +306,21 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
 
       {/* 바깥 컨테이너는 overflow-visible — 말풍선/입력창이 잘리지 않도록 */}
       <div className="relative aspect-[16/9] md:aspect-[2/1]">
-        {/* 파노라마 스트립 — 구면 왜곡 대신 넓은 사진을 부드럽게 좌우 탐색 */}
+        {/* 구면 파노라마 뷰어 */}
         <div
           ref={containerRef}
-          className="absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)] cursor-grab active:cursor-grabbing touch-pan-y select-none"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          onClick={handlePanoramaClick}
-        >
-          <div
-            ref={stripRef}
-            className="absolute inset-y-0 left-0 will-change-transform"
-            style={{
-              width: `${PANORAMA_STRIP_SCALE * 100}%`,
-              transform: `translateX(-${pan * ((PANORAMA_STRIP_SCALE - 1) / PANORAMA_STRIP_SCALE) * 100}%)`,
-              transition: dragRef.current ? "none" : "transform 420ms cubic-bezier(.22,1,.36,1)",
-            }}
-          >
-            <img
-              src={activePanorama || PLACEHOLDER_PANO}
-              alt="어라운드뷰 파노라마"
-              draggable={false}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-transparent to-black/28 pointer-events-none" />
-            {markerItems.map(({ comment, position }) => (
-              <button
-                key={comment.id}
-                type="button"
-                data-comment-marker
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setDraft(null);
-                  setActiveComment(comment);
-                }}
-                className="av-note-marker group"
-                style={{ left: `${position.x * 100}%`, top: `${position.y * 100}%` }}
-                aria-label={`${comment.user_name} 코멘트 보기`}
-              >
-                <span className="av-note-pin" />
-                <span className="av-note-label">
-                  <span className="av-note-avatar">
-                    {comment.avatar_url ? <img src={comment.avatar_url} alt="" /> : comment.user_name.charAt(0)}
-                  </span>
-                  <span className="av-note-text">코멘트</span>
-                </span>
-              </button>
-            ))}
+          className="av-psv-container absolute inset-0 rounded-sm overflow-hidden bg-black shadow-[0_30px_80px_-30px_rgba(0,0,0,0.6)]"
+        />
+        {comments.length === 0 && (
+          <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2 z-10">
+            <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
           </div>
-
-          {comments.length === 0 && (
+        )}
+        {false && (
             <div className="pointer-events-none absolute bottom-3 left-3 text-[10px] tracking-[0.2em] text-white/60 uppercase flex items-center gap-2">
               <MessageCircle className="w-3 h-3" /> 예시 코멘트 · 마커를 눌러보세요
             </div>
           )}
-        </div>
 
         {/* Speech bubble for active comment — 뷰어 위에 떠 있고, 잘리지 않음 */}
         <AnimatePresence>
