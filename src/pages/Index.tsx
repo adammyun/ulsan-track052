@@ -527,6 +527,19 @@ export default function Index() {
             </span>
           </div>
         </motion.div>
+
+        {/* 대표 문구 — hero 하단, scroll 위 */}
+        <div className="absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 z-10 text-center animate-fade-up">
+          <p className="font-serif-kr text-sm md:text-base text-white/70 leading-[1.7] tracking-wide">
+            소란한 일상을 떠나, 고요한 길목으로
+          </p>
+          <div className="mt-2.5 flex items-center justify-center gap-2.5">
+            <span className="block w-5 h-px bg-accent-c" />
+            <span className="text-[8px] tracking-[0.3em] text-white/40">TRACK : 052</span>
+            <span className="block w-5 h-px bg-accent-c" />
+          </div>
+        </div>
+
         <div className="absolute bottom-11 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 z-10 animate-fade-up">
           <div className="w-px h-9 bg-white/25 relative overflow-hidden">
             <span className="absolute -top-full left-0 w-full h-full bg-accent-c" style={{ animation: "drop-line 2s 1.8s infinite ease" }} />
