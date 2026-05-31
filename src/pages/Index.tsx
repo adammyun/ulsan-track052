@@ -548,18 +548,6 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Transition quote — between hero and content */}
-      <div className="px-6 md:px-14 py-20 md:py-28 bg-paper text-center transition-colors duration-700">
-        <p className="font-serif-kr text-xl md:text-2xl text-ink-mid leading-[1.7]">
-          소란한 일상을 떠나, 고요한 길목으로
-        </p>
-        <div className="mt-5 flex items-center justify-center gap-3">
-          <span className="block w-7 h-px bg-accent-c" />
-          <span className="text-[9px] tracking-[0.3em] text-ink-light">TRACK : 052</span>
-          <span className="block w-7 h-px bg-accent-c" />
-        </div>
-      </div>
-
       {/* Editor's Pick */}
       <motion.section id="pick" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-24 bg-paper transition-colors duration-700">
         <ParallaxLayer offset={90}>
