@@ -667,7 +667,7 @@ export default function Index() {
               <button onClick={()=>setMoreJunggu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
                 {moreJunggu ? "접기" : "더보기"}
               </button>
-              <span className="text-[10px] text-ink-light">{moreJunggu ? `전체 ${jungguList.length}곳을 보고 있어요` : "+ 6곳 더 있어요"}</span>
+              <span className="text-[10px] text-ink-light">{moreJunggu ? `전체 ${jungguList.length}곳을 보고 있어요` : "+3곳 더 있어요"}</span>
             </div>
           </>
         )}
