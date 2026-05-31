@@ -535,6 +535,18 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Transition quote — between hero and content */}
+      <div className="px-6 md:px-14 py-20 md:py-28 bg-paper text-center transition-colors duration-700">
+        <p className="font-serif-kr text-xl md:text-2xl text-ink-mid leading-[1.7]">
+          소란한 일상을 떠나, 고요한 길목으로
+        </p>
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <span className="block w-7 h-px bg-accent-c" />
+          <span className="text-[9px] tracking-[0.3em] text-ink-light">TRACK : 052</span>
+          <span className="block w-7 h-px bg-accent-c" />
+        </div>
+      </div>
+
       {/* Editor's Pick */}
       <motion.section id="pick" variants={sectionVariants} initial="hidden" whileInView="show" viewport={sectionViewport} className="px-6 md:px-14 py-24 bg-paper transition-colors duration-700">
         <ParallaxLayer offset={90}>
@@ -634,7 +646,7 @@ export default function Index() {
               <button onClick={()=>setMoreNamgu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
                 {moreNamgu ? "접기" : "더보기"}
               </button>
-              <span className="text-[10px] text-ink-light">{moreNamgu ? `전체 ${namguList.length}곳을 보고 있어요` : "+ 6곳 더 있어요"}</span>
+              <span className="text-[10px] text-ink-light">{moreNamgu ? `전체 ${namguList.length}곳을 보고 있어요` : "+3곳 더 있어요"}</span>
             </div>
           </>
         )}
@@ -667,7 +679,7 @@ export default function Index() {
               <button onClick={()=>setMoreJunggu(v=>!v)} className="text-[9px] tracking-[0.2em] px-5 py-2 border border-faint rounded-full text-ink-light hover:border-[hsl(var(--accent))] hover:text-accent-c transition-colors">
                 {moreJunggu ? "접기" : "더보기"}
               </button>
-              <span className="text-[10px] text-ink-light">{moreJunggu ? `전체 ${jungguList.length}곳을 보고 있어요` : "+ 6곳 더 있어요"}</span>
+              <span className="text-[10px] text-ink-light">{moreJunggu ? `전체 ${jungguList.length}곳을 보고 있어요` : "+3곳 더 있어요"}</span>
             </div>
           </>
         )}
