@@ -519,7 +519,19 @@ export default function Index() {
             <p className="text-[9px] tracking-[0.32em] text-accent-c mb-2.5">ULSAN HIDDEN TRACK</p>
             <p className="font-serif-kr italic text-sm md:text-base text-white/60 tracking-wide">울산의 길목에서, 오늘의 길을 찾습니다</p>
           </div>
-          
+
+          {/* 대표 문구 — 서브타이틀 바로 아래, 중앙 정렬, 동일 패럴랙스 적용 */}
+          <div className="mt-6 animate-fade-up text-center">
+            <p className="font-serif-kr text-sm md:text-base text-white/70 leading-[1.7] tracking-wide">
+              소란한 일상을 떠나, 고요한 길목으로
+            </p>
+            <div className="mt-2.5 flex items-center justify-center gap-2.5">
+              <span className="block w-5 h-px bg-accent-c" />
+              <span className="text-[8px] tracking-[0.3em] text-white/40">TRACK : 052</span>
+              <span className="block w-5 h-px bg-accent-c" />
+            </div>
+          </div>
+
           {/* 3. 설명 뱃지 */}
           <div className="mt-5 min-h-[22px] animate-fade-up">
             <span className="text-[9px] tracking-[0.22em] text-white/55 px-3.5 py-1 border border-white/15 rounded-full backdrop-blur-sm">
@@ -527,18 +539,6 @@ export default function Index() {
             </span>
           </div>
         </motion.div>
-
-        {/* 대표 문구 — hero 하단, scroll 위 */}
-        <div className="absolute bottom-[5.5rem] left-1/2 -translate-x-1/2 z-10 text-center animate-fade-up">
-          <p className="font-serif-kr text-sm md:text-base text-white/70 leading-[1.7] tracking-wide">
-            소란한 일상을 떠나, 고요한 길목으로
-          </p>
-          <div className="mt-2.5 flex items-center justify-center gap-2.5">
-            <span className="block w-5 h-px bg-accent-c" />
-            <span className="text-[8px] tracking-[0.3em] text-white/40">TRACK : 052</span>
-            <span className="block w-5 h-px bg-accent-c" />
-          </div>
-        </div>
 
         <div className="absolute bottom-11 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 z-10 animate-fade-up">
           <div className="w-px h-9 bg-white/25 relative overflow-hidden">
