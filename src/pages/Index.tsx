@@ -72,6 +72,20 @@ const CONCEPT_DESC: Record<Concept, string> = {
   jireum: "JIREUM — 현지인만 아는 빠른 길",
 };
 
+const HERO_QUOTES = [
+  "골목길 너머 펼쳐지는 소소한 이야기들",
+  "당신의 일상 곁에 숨겨진 로컬 트랙",
+  "지도로는 찾을 수 없는, 마음이 머무는 길",
+  "우리가 미처 몰랐던 울산의 숨은 조각들",
+  "오늘 하루, 잠시 길을 잃어도 괜찮아요",
+  "천천히 걸어야 머무는 풍경들",
+  "낯선 길에서 발견하는 익숙한 위로",
+  "목적지 없이 걸어도 좋은, 당신을 위한 숨은 길",
+  "인생이라는 여정 속, 잠시 쉬어가는 나만의 샛길",
+  "속도를 줄이면 비로소 보이는 작은 길들",
+  "큰 길에서 잠시 벗어나, 여유를 마주하는 시간",
+];
+
 // 순환 순서: 선택한 요소 기준으로 [left, center(selected), right]
 const CYCLE: Concept[] = ["track", "gatgil", "saetgil", "jireum"];
 const PICK_CYCLE: PickConcept[] = ["gatgil", "saetgil", "jireum"];
