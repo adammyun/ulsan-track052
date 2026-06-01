@@ -312,6 +312,10 @@ export default function Index() {
   const moveTextX = useTransform(springX, [-0.5, 0.5], [20, -20]); 
   const moveTextY = useTransform(springY, [-0.5, 0.5], [20, -20]);
 
+  // 대표 문구는 주변 텍스트보다 패럴랙스를 절반만 받도록 보정
+  const quoteOffsetX = useTransform(moveTextX, (v) => -v * 0.5);
+  const quoteOffsetY = useTransform(moveTextY, (v) => -v * 0.5);
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
