@@ -546,17 +546,19 @@ export default function Index() {
             </span>
           </div>
 
-          {/* 대표 문구 — 패럴랙스 컨테이너 최하단, 크게 표시 */}
-          <div className="mt-14 md:mt-20 animate-fade-up text-center">
-            <p className="font-serif-kr text-xl md:text-3xl lg:text-4xl text-white/80 leading-[1.55] tracking-wide">
-              소란한 일상을 떠나, 고요한 길목으로
-            </p>
-            <div className="mt-5 flex items-center justify-center gap-3">
-              <span className="block w-8 h-px bg-accent-c" />
-              <span className="text-[10px] tracking-[0.35em] text-white/50">TRACK : 052</span>
-              <span className="block w-8 h-px bg-accent-c" />
+          {/* 대표 문구 — 패럴랙스 컨테이너 최하단, 크게 표시 (둔한 패럴랙스 적용) */}
+          <motion.div style={{ x: quoteOffsetX, y: quoteOffsetY }}>
+            <div className="mt-14 md:mt-20 animate-fade-up text-center">
+              <p className="font-serif-kr text-xl md:text-3xl lg:text-4xl text-white/80 leading-[1.55] tracking-wide">
+                {heroQuote}
+              </p>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <span className="block w-8 h-px bg-accent-c" />
+                <span className="text-[10px] tracking-[0.35em] text-white/50">TRACK : 052</span>
+                <span className="block w-8 h-px bg-accent-c" />
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         <div className="absolute bottom-11 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5 z-10 animate-fade-up">
