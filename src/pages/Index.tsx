@@ -293,6 +293,7 @@ export default function Index() {
   const [guideTick, setGuideTick] = useState(0); // 진행바 리셋용 키
   const [slotDir, setSlotDir] = useState<"r" | "l">("r"); // 텍스트 슬롯 슬라이드 방향
   const [slotKey, setSlotKey] = useState(0); // 같은 컨셉 재선택 시에도 재실행
+  const [heroQuote] = useState(() => HERO_QUOTES[Math.floor(Math.random() * HERO_QUOTES.length)]);
   const prevConceptRef = useRef<Concept>(concept);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const mouseX = useMotionValue(0);
