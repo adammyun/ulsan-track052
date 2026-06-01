@@ -520,23 +520,23 @@ export default function Index() {
             <p className="font-serif-kr italic text-sm md:text-base text-white/60 tracking-wide">울산의 길목에서, 오늘의 길을 찾습니다</p>
           </div>
 
-          {/* 대표 문구 — 서브타이틀 바로 아래, 중앙 정렬, 동일 패럴랙스 적용 */}
-          <div className="mt-6 animate-fade-up text-center">
-            <p className="font-serif-kr text-sm md:text-base text-white/70 leading-[1.7] tracking-wide">
-              소란한 일상을 떠나, 고요한 길목으로
-            </p>
-            <div className="mt-2.5 flex items-center justify-center gap-2.5">
-              <span className="block w-5 h-px bg-accent-c" />
-              <span className="text-[8px] tracking-[0.3em] text-white/40">TRACK : 052</span>
-              <span className="block w-5 h-px bg-accent-c" />
-            </div>
-          </div>
-
           {/* 3. 설명 뱃지 */}
           <div className="mt-5 min-h-[22px] animate-fade-up">
             <span className="text-[9px] tracking-[0.22em] text-white/55 px-3.5 py-1 border border-white/15 rounded-full backdrop-blur-sm">
               {CONCEPT_DESC[concept]}
             </span>
+          </div>
+
+          {/* 대표 문구 — 패럴랙스 컨테이너 최하단, 크게 표시 */}
+          <div className="mt-14 md:mt-20 animate-fade-up text-center">
+            <p className="font-serif-kr text-xl md:text-3xl lg:text-4xl text-white/80 leading-[1.55] tracking-wide">
+              소란한 일상을 떠나, 고요한 길목으로
+            </p>
+            <div className="mt-5 flex items-center justify-center gap-3">
+              <span className="block w-8 h-px bg-accent-c" />
+              <span className="text-[10px] tracking-[0.35em] text-white/50">TRACK : 052</span>
+              <span className="block w-8 h-px bg-accent-c" />
+            </div>
           </div>
         </motion.div>
 
