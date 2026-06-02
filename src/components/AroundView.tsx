@@ -317,7 +317,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
       </p>
 
       {/* 바깥 컨테이너는 overflow-visible — 말풍선/입력창이 잘리지 않도록 */}
-      <div className="relative aspect-[16/9] md:aspect-[2/1]">
+      <div className="relative aspect-[4/3] sm:aspect-[16/9] md:aspect-[2/1] min-h-[360px]">
         {/* 구면 파노라마 뷰어 */}
         <div
           ref={containerRef}
@@ -337,7 +337,7 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 -translate-x-1/2 bottom-3 md:bottom-6 w-[min(calc(100%-1.5rem),28rem)] z-50 [filter:drop-shadow(0_12px_32px_rgba(0,0,0,0.7))]"
+              className="absolute left-1/2 -translate-x-1/2 bottom-3 md:bottom-6 w-[min(calc(100%-1.5rem),28rem)] max-h-[calc(100%-1.5rem)] overflow-y-auto z-50 [filter:drop-shadow(0_12px_32px_rgba(0,0,0,0.7))]"
             >
               <div className="relative bg-stone-900/95 backdrop-blur-md text-white rounded-2xl px-5 py-4 shadow-2xl border border-white/15 ring-1 ring-black/40">
                 <button
@@ -461,11 +461,11 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
               onClick={() => setEditing(null)}
             >
               <div
-                className="w-[min(100%,28rem)] bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
+                className="w-[min(100%,28rem)] max-h-[calc(100vh-2rem)] overflow-y-auto bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-3">
@@ -520,11 +520,11 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
               onClick={() => setDeletingId(null)}
             >
               <div
-                className="w-[min(100%,24rem)] bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
+                className="w-[min(100%,24rem)] max-h-[calc(100vh-2rem)] overflow-y-auto bg-stone-900 rounded-lg p-5 border border-white/15 ring-1 ring-black/40 text-white shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between mb-3">
