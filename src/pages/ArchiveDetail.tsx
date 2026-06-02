@@ -103,7 +103,17 @@ export default function ArchiveDetail() {
               src={`/images/${data.cover_image}.jpg`}
               alt={data.name}
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
+                const el = e.currentTarget as HTMLImageElement;
+                const tried = el.dataset.tried || "";
+                if (!tried.includes("day")) {
+                  el.dataset.tried = tried + "day";
+                  el.src = `/images/${data.cover_image}-day.jpg`;
+                } else if (!tried.includes("night")) {
+                  el.dataset.tried = tried + "night";
+                  el.src = `/images/${data.cover_image}-night.jpg`;
+                } else {
+                  el.style.display = "none";
+                }
               }}
               className="absolute inset-0 w-full h-full object-cover"
             />
