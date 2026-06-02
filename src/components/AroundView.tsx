@@ -95,6 +95,10 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
   const [comments, setComments] = useState<AroundComment[]>([]);
   const [activeComment, setActiveComment] = useState<AroundComment | null>(null);
   const [draft, setDraft] = useState<{ pitch: number; yaw: number } | null>(null);
+  const activeCommentRef = useRef<AroundComment | null>(null);
+  const draftRef = useRef<{ pitch: number; yaw: number } | null>(null);
+  useEffect(() => { activeCommentRef.current = activeComment; }, [activeComment]);
+  useEffect(() => { draftRef.current = draft; }, [draft]);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
   const [password, setPassword] = useState("");
@@ -151,6 +155,12 @@ export default function AroundView({ pathId, panoramaUrl, panoramaUrlNight, isNi
     const handleClick = (e: { data: { rightclick: boolean; yaw: number; pitch: number; target: HTMLElement | null } }) => {
       if (e.data.rightclick) return;
       if (e.data.target && (e.data.target as HTMLElement).closest?.(".psv-marker")) return;
+      // 팝업/작성창이 열려 있으면 먼저 닫기만 한다 (한 번의 클릭으로 새 코멘트 작성 시작 X)
+      if (activeCommentRef.current || draftRef.current) {
+        setActiveComment(null);
+        setDraft(null);
+        return;
+      }
       setActiveComment(null);
       setDraft({ pitch: e.data.pitch, yaw: e.data.yaw });
     };
