@@ -215,7 +215,19 @@ export default function ArrivalSection({
             <img
               src={`/images/${coverImage}.jpg`}
               alt={placeName}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              onError={(e) => {
+                const el = e.currentTarget as HTMLImageElement;
+                const tried = el.dataset.tried || "";
+                if (!tried.includes("day")) {
+                  el.dataset.tried = tried + "day";
+                  el.src = `/images/${coverImage}-day.jpg`;
+                } else if (!tried.includes("night")) {
+                  el.dataset.tried = tried + "night";
+                  el.src = `/images/${coverImage}-night.jpg`;
+                } else {
+                  el.style.display = "none";
+                }
+              }}
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
