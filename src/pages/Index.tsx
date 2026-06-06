@@ -160,19 +160,28 @@ const JUNGGU: ArchItem[] = [
 
 // 무드보드 — 낮/밤 별도 이미지. 밤은 같은 장소의 또다른 자연 야경.
 // url 이 지정된 항목은 외부 자연 풍경 이미지를 그대로 사용합니다.
-const MOOD: { day?: string; night?: string; url?: string; label: string; ratio: string }[] = [
+const MOOD: { day?: string; night?: string; url?: string; urlNight?: string; label: string; ratio: string }[] = [
   { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn-night",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
-  { url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80", label: "이름 없는 숲길",      ratio: "aspect-[3/4]" },
+  { url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80",
+    urlNight: "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1400&q=80",
+    label: "이름 없는 숲길",      ratio: "aspect-[3/4]" },
   { day: "mood-seongnam-spring",   night: "mood-seongnam-spring-night",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
-  { url: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60a?w=1400&q=80", label: "산 그림자, 흐르는 물",  ratio: "aspect-square" },
   { day: "mood-seonam-dawn",       night: "mood-seonam-dawn-night",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
-  { url: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80", label: "햇살이 새어드는 숲", ratio: "aspect-[4/3]" },
+  { url: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80",
+    urlNight: "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1400&q=80",
+    label: "햇살이 새어드는 숲", ratio: "aspect-[4/3]" },
   { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night",       label: "장생포 야경",         ratio: "aspect-[3/4]" },
-  { url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1600&q=80", label: "고요한 협곡",         ratio: "aspect-[3/4]" },
+  { url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1600&q=80",
+    urlNight: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1400&q=80",
+    label: "고요한 협곡",         ratio: "aspect-[3/4]" },
   { day: "mood-hakseong-winter",   night: "mood-hakseong-winter-night",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
-  { url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1400&q=80", label: "숲속의 물줄기",       ratio: "aspect-square" },
+  { url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1400&q=80",
+    urlNight: "https://images.unsplash.com/photo-1485470733090-0aae1788d5af?w=1600&q=80",
+    label: "숲속의 물줄기",       ratio: "aspect-square" },
   { day: "mood-samsan-evening",    night: "mood-samsan-evening-night",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
-  { url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80", label: "능선 너머의 하늘",     ratio: "aspect-[4/3]" },
+  { url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80",
+    urlNight: "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=1200&q=80",
+    label: "능선 너머의 하늘",     ratio: "aspect-[4/3]" },
 ];
 
 // 가이드 — 4페이지의 챕터식 페이지 넘김
@@ -239,11 +248,16 @@ function ArchImg({ base, alt, isNight, coverUrl }: { base: string; alt: string; 
   );
 }
 
-function MoodImg({ day, night, url, alt, isNight }: { day?: string; night?: string; url?: string; alt: string; isNight: boolean }) {
+function MoodImg({ day, night, url, urlNight, alt, isNight }: { day?: string; night?: string; url?: string; urlNight?: string; alt: string; isNight: boolean }) {
   if (url) {
+    const nightSrc = urlNight ?? url;
     return (
-      <img src={url} alt={alt} loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105" />
+      <>
+        <img src={url} alt={alt} loading="lazy"
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} />
+        <img src={nightSrc} alt={alt} loading="lazy"
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} />
+      </>
     );
   }
   return (
@@ -841,7 +855,7 @@ export default function Index() {
         <div className="reveal columns-2 md:columns-3 gap-3.5 [column-fill:_balance]">
           {MOOD.map((m, i) => (
             <div key={i} className={`group break-inside-avoid mb-3.5 overflow-hidden relative rounded-sm bg-[hsl(var(--ink-faint))] ${m.ratio}`}>
-              <MoodImg day={m.day} night={m.night} url={m.url} alt={m.label} isNight={isNight} />
+              <MoodImg day={m.day} night={m.night} url={m.url} urlNight={m.urlNight} alt={m.label} isNight={isNight} />
               <div className="absolute inset-x-0 bottom-0 px-3.5 pt-5 pb-3 bg-gradient-to-t from-black/65 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="font-serif-kr italic text-[11px] text-white">{m.label}</span>
               </div>
