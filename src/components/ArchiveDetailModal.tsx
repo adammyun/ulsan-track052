@@ -67,7 +67,6 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
   // 모달 내부 전용 낮/밤 오버라이드. null 이면 실제 시각을 따름.
   const [forcedNight, setForcedNight] = useState<boolean | null>(null);
   const effectiveNight = forcedNight ?? isNightHour();
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["path", id],
@@ -84,30 +83,10 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
     enabled: !!id,
   });
 
-  // Gallery — deterministic per article so it doesn't reshuffle on rerender
-  const galleryKey = id ?? placeholder?.name ?? "x";
-  const gallery = useMemo(() => {
-    let h = 0;
-    for (let i = 0; i < galleryKey.length; i++) h = (h * 31 + galleryKey.charCodeAt(i)) | 0;
-    // Deterministic per-article shuffle so each content gets a distinct set.
-    const indices = GALLERY_POOL.map((_, i) => i);
-    let seed = Math.abs(h) || 1;
-    const rand = () => {
-      seed = (seed * 1664525 + 1013904223) | 0;
-      return ((seed >>> 0) % 100000) / 100000;
-    };
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(rand() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-    return indices.slice(0, 6).map((i) => GALLERY_POOL[i]);
-  }, [galleryKey]);
-
   // Reset dev bypass + theme override whenever we open a different article
   useEffect(() => {
     setForceUnlocked(false);
     setForcedNight(null);
-    setLightboxIdx(null);
   }, [id, placeholder?.name]);
 
   // Scroll lock + ESC to close
