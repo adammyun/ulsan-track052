@@ -1,51 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { X, MapPin, Ticket, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, MapPin, Ticket, Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ArrivalSection from "@/components/ArrivalSection";
 import AroundView from "@/components/AroundView";
-
-const GALLERY_POOL = [
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80",
-  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80",
-  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=1200&q=80",
-  "https://images.unsplash.com/photo-1505765050516-f72dcac9c60a?w=1400&q=80",
-  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80",
-  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1400&q=80",
-  "https://images.unsplash.com/photo-1485470733090-0aae1788d5af?w=1600&q=80",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1600&q=80",
-  "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1400&q=80",
-  "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
-  "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1400&q=80",
-  "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=1400&q=80",
-  "https://images.unsplash.com/photo-1490604001847-b712b0c2f967?w=1400&q=80",
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502790671504-542ad42d5189?w=1400&q=80",
-  "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1400&q=80",
-  "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1400&q=80",
-  "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=1400&q=80",
-  "https://images.unsplash.com/photo-1431794062232-2a99a5431c6c?w=1400&q=80",
-  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1400&q=80",
-  "https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1400&q=80",
-  "https://images.unsplash.com/photo-1504198266287-1659872e6590?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502780402662-acc01917cf57?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444090542259-0af8fa96557e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1487744480471-9ca1bca6fb7d?w=1400&q=80",
-  "https://images.unsplash.com/photo-1486520299386-6d106b22014b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=1200&q=80",
-  "https://images.unsplash.com/photo-1455218873509-8097305ee378?w=1400&q=80",
-  "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444084316824-dc26d6657664?w=1400&q=80",
-];
 
 const isNightHour = (d = new Date()) => {
   const h = d.getHours();
@@ -108,7 +67,6 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
   // 모달 내부 전용 낮/밤 오버라이드. null 이면 실제 시각을 따름.
   const [forcedNight, setForcedNight] = useState<boolean | null>(null);
   const effectiveNight = forcedNight ?? isNightHour();
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["path", id],
@@ -125,30 +83,10 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
     enabled: !!id,
   });
 
-  // Gallery — deterministic per article so it doesn't reshuffle on rerender
-  const galleryKey = id ?? placeholder?.name ?? "x";
-  const gallery = useMemo(() => {
-    let h = 0;
-    for (let i = 0; i < galleryKey.length; i++) h = (h * 31 + galleryKey.charCodeAt(i)) | 0;
-    // Deterministic per-article shuffle so each content gets a distinct set.
-    const indices = GALLERY_POOL.map((_, i) => i);
-    let seed = Math.abs(h) || 1;
-    const rand = () => {
-      seed = (seed * 1664525 + 1013904223) | 0;
-      return ((seed >>> 0) % 100000) / 100000;
-    };
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(rand() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
-    return indices.slice(0, 6).map((i) => GALLERY_POOL[i]);
-  }, [galleryKey]);
-
   // Reset dev bypass + theme override whenever we open a different article
   useEffect(() => {
     setForceUnlocked(false);
     setForcedNight(null);
-    setLightboxIdx(null);
   }, [id, placeholder?.name]);
 
   // Scroll lock + ESC to close
@@ -451,115 +389,12 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                       />
                     </motion.div>
 
-                    {/* More Scenes Gallery */}
-                    <motion.section
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true, amount: 0.15 }}
-                      variants={fadeUp}
-                      className="mt-16"
-                    >
-                      <div className={`rounded-md p-5 md:p-6 backdrop-blur-md border transition-colors duration-500 ${effectiveNight ? "bg-black/55 border-white/10" : "bg-white/75 border-black/5"}`}>
-                      <p className={`text-[10px] tracking-[0.3em] flex items-center gap-3 mb-3 ${effectiveNight ? "text-white/80" : "text-ink"} [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]`}>
-                        MORE SCENES <span className="block w-7 h-px bg-accent-c" />
-                      </p>
-                      <p className={`text-[12px] mb-5 leading-relaxed ${effectiveNight ? "text-white/85" : "text-ink-mid"} [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]`}>
-                        이 길의 분위기를 더 담은 풍경들. 이미지를 누르면 크게 볼 수 있어요.
-                      </p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 [grid-auto-rows:10rem] md:[grid-auto-rows:11rem]">
-                        {gallery.map((src, i) => {
-                          const span =
-                            i === 0
-                              ? "col-span-2 row-span-2"
-                              : i === 3
-                                ? "row-span-2"
-                                : "";
-                          return (
-                            <button
-                              key={src + i}
-                              type="button"
-                              onClick={() => setLightboxIdx(i)}
-                              className={`relative overflow-hidden rounded-sm group bg-ink-faint ${span}`}
-                            >
-                              <img
-                                src={src}
-                                alt={`${data.name} scene ${i + 1}`}
-                                loading="lazy"
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
-                            </button>
-                          );
-                        })}
-                      </div>
-                      </div>
-                    </motion.section>
                   </article>
                 </>
               )}
             </div>
           </motion.div>
 
-          {/* Lightbox */}
-          <AnimatePresence>
-            {lightboxIdx !== null && (
-              <motion.div
-                key="lightbox"
-                className="absolute inset-0 z-30 flex items-center justify-center p-4 md:p-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                onClick={() => setLightboxIdx(null)}
-              >
-                <div className="absolute inset-0 bg-black/90 backdrop-blur" />
-                <motion.img
-                  key={gallery[lightboxIdx]}
-                  src={gallery[lightboxIdx]}
-                  alt=""
-                  initial={{ scale: 0.96, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.96, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative max-h-full max-w-full object-contain rounded-sm shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  type="button"
-                  aria-label="이전"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx((v) => (v === null ? v : (v - 1 + gallery.length) % gallery.length));
-                  }}
-                  className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="다음"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx((v) => (v === null ? v : (v + 1) % gallery.length));
-                  }}
-                  className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="닫기"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx(null);
-                  }}
-                  className="absolute top-4 right-4 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
