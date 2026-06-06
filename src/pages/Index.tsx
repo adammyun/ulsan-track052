@@ -841,7 +841,7 @@ export default function Index() {
         <div className="reveal columns-2 md:columns-3 gap-3.5 [column-fill:_balance]">
           {MOOD.map((m, i) => (
             <div key={i} className={`group break-inside-avoid mb-3.5 overflow-hidden relative rounded-sm bg-[hsl(var(--ink-faint))] ${m.ratio}`}>
-              <MoodImg day={m.day} night={m.night} alt={m.label} isNight={isNight} />
+              <MoodImg day={m.day} night={m.night} url={m.url} alt={m.label} isNight={isNight} />
               <div className="absolute inset-x-0 bottom-0 px-3.5 pt-5 pb-3 bg-gradient-to-t from-black/65 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="font-serif-kr italic text-[11px] text-white">{m.label}</span>
               </div>
