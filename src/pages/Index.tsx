@@ -159,13 +159,20 @@ const JUNGGU: ArchItem[] = [
 ];
 
 // 무드보드 — 낮/밤 별도 이미지. 밤은 같은 장소의 또다른 자연 야경.
-const MOOD: { day: string; night: string; label: string; ratio: string }[] = [
+// url 이 지정된 항목은 외부 자연 풍경 이미지를 그대로 사용합니다.
+const MOOD: { day?: string; night?: string; url?: string; label: string; ratio: string }[] = [
   { day: "mood-taehwa-autumn",     night: "mood-taehwa-autumn-night",     label: "태화강 억새밭, 가을",  ratio: "aspect-[4/3]" },
+  { url: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80", label: "이름 없는 숲길",      ratio: "aspect-[3/4]" },
   { day: "mood-seongnam-spring",   night: "mood-seongnam-spring-night",   label: "성남동 골목, 봄 오후", ratio: "aspect-[3/4]" },
+  { url: "https://images.unsplash.com/photo-1505765050516-f72dcac9c60a?w=1400&q=80", label: "산 그림자, 흐르는 물",  ratio: "aspect-square" },
   { day: "mood-seonam-dawn",       night: "mood-seonam-dawn-night",       label: "선암호수, 여름 새벽",  ratio: "aspect-square" },
+  { url: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80", label: "햇살이 새어드는 숲", ratio: "aspect-[4/3]" },
   { day: "mood-jangseongpo-night", night: "mood-jangseongpo-night",       label: "장생포 야경",         ratio: "aspect-[3/4]" },
+  { url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1600&q=80", label: "고요한 협곡",         ratio: "aspect-[3/4]" },
   { day: "mood-hakseong-winter",   night: "mood-hakseong-winter-night",   label: "학성공원, 겨울 아침", ratio: "aspect-[4/3]" },
+  { url: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1400&q=80", label: "숲속의 물줄기",       ratio: "aspect-square" },
   { day: "mood-samsan-evening",    night: "mood-samsan-evening-night",    label: "삼산동 주택가, 저녁", ratio: "aspect-square" },
+  { url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80", label: "능선 너머의 하늘",     ratio: "aspect-[4/3]" },
 ];
 
 // 가이드 — 4페이지의 챕터식 페이지 넘김
@@ -232,7 +239,13 @@ function ArchImg({ base, alt, isNight, coverUrl }: { base: string; alt: string; 
   );
 }
 
-function MoodImg({ day, night, alt, isNight }: { day: string; night: string; alt: string; isNight: boolean }) {
+function MoodImg({ day, night, url, alt, isNight }: { day?: string; night?: string; url?: string; alt: string; isNight: boolean }) {
+  if (url) {
+    return (
+      <img src={url} alt={alt} loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105" />
+    );
+  }
   return (
     <>
       <img src={`/images/${day}.jpg`} alt={alt}
