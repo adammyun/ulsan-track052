@@ -1,51 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { X, MapPin, Ticket, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, MapPin, Ticket, Sun, Moon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ArrivalSection from "@/components/ArrivalSection";
 import AroundView from "@/components/AroundView";
-
-const GALLERY_POOL = [
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1600&q=80",
-  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80",
-  "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=1200&q=80",
-  "https://images.unsplash.com/photo-1505765050516-f72dcac9c60a?w=1400&q=80",
-  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1600&q=80",
-  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1400&q=80",
-  "https://images.unsplash.com/photo-1485470733090-0aae1788d5af?w=1600&q=80",
-  "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1600&q=80",
-  "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1400&q=80",
-  "https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1600&q=80",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80",
-  "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=1400&q=80",
-  "https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=1400&q=80",
-  "https://images.unsplash.com/photo-1490604001847-b712b0c2f967?w=1400&q=80",
-  "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502790671504-542ad42d5189?w=1400&q=80",
-  "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1400&q=80",
-  "https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1400&q=80",
-  "https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=1400&q=80",
-  "https://images.unsplash.com/photo-1431794062232-2a99a5431c6c?w=1400&q=80",
-  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1473773508845-188df298d2d1?w=1400&q=80",
-  "https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1400&q=80",
-  "https://images.unsplash.com/photo-1504198266287-1659872e6590?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502780402662-acc01917cf57?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444090542259-0af8fa96557e?w=1400&q=80",
-  "https://images.unsplash.com/photo-1487744480471-9ca1bca6fb7d?w=1400&q=80",
-  "https://images.unsplash.com/photo-1486520299386-6d106b22014b?w=1400&q=80",
-  "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=1200&q=80",
-  "https://images.unsplash.com/photo-1455218873509-8097305ee378?w=1400&q=80",
-  "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?w=1400&q=80",
-  "https://images.unsplash.com/photo-1444084316824-dc26d6657664?w=1400&q=80",
-];
 
 const isNightHour = (d = new Date()) => {
   const h = d.getHours();
