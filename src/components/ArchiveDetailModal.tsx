@@ -389,115 +389,12 @@ export default function ArchiveDetailModal({ id, placeholder = null, onClose }: 
                       />
                     </motion.div>
 
-                    {/* More Scenes Gallery */}
-                    <motion.section
-                      initial="hidden"
-                      whileInView="show"
-                      viewport={{ once: true, amount: 0.15 }}
-                      variants={fadeUp}
-                      className="mt-16"
-                    >
-                      <div className={`rounded-md p-5 md:p-6 backdrop-blur-md border transition-colors duration-500 ${effectiveNight ? "bg-black/55 border-white/10" : "bg-white/75 border-black/5"}`}>
-                      <p className={`text-[10px] tracking-[0.3em] flex items-center gap-3 mb-3 ${effectiveNight ? "text-white/80" : "text-ink"} [text-shadow:0_1px_2px_rgba(0,0,0,0.35)]`}>
-                        MORE SCENES <span className="block w-7 h-px bg-accent-c" />
-                      </p>
-                      <p className={`text-[12px] mb-5 leading-relaxed ${effectiveNight ? "text-white/85" : "text-ink-mid"} [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]`}>
-                        이 길의 분위기를 더 담은 풍경들. 이미지를 누르면 크게 볼 수 있어요.
-                      </p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 [grid-auto-rows:10rem] md:[grid-auto-rows:11rem]">
-                        {gallery.map((src, i) => {
-                          const span =
-                            i === 0
-                              ? "col-span-2 row-span-2"
-                              : i === 3
-                                ? "row-span-2"
-                                : "";
-                          return (
-                            <button
-                              key={src + i}
-                              type="button"
-                              onClick={() => setLightboxIdx(i)}
-                              className={`relative overflow-hidden rounded-sm group bg-ink-faint ${span}`}
-                            >
-                              <img
-                                src={src}
-                                alt={`${data.name} scene ${i + 1}`}
-                                loading="lazy"
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors" />
-                            </button>
-                          );
-                        })}
-                      </div>
-                      </div>
-                    </motion.section>
                   </article>
                 </>
               )}
             </div>
           </motion.div>
 
-          {/* Lightbox */}
-          <AnimatePresence>
-            {lightboxIdx !== null && (
-              <motion.div
-                key="lightbox"
-                className="absolute inset-0 z-30 flex items-center justify-center p-4 md:p-10"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                onClick={() => setLightboxIdx(null)}
-              >
-                <div className="absolute inset-0 bg-black/90 backdrop-blur" />
-                <motion.img
-                  key={gallery[lightboxIdx]}
-                  src={gallery[lightboxIdx]}
-                  alt=""
-                  initial={{ scale: 0.96, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.96, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="relative max-h-full max-w-full object-contain rounded-sm shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  type="button"
-                  aria-label="이전"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx((v) => (v === null ? v : (v - 1 + gallery.length) % gallery.length));
-                  }}
-                  className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="다음"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx((v) => (v === null ? v : (v + 1) % gallery.length));
-                  }}
-                  className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="닫기"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIdx(null);
-                  }}
-                  className="absolute top-4 right-4 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
