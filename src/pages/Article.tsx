@@ -53,7 +53,7 @@ const SEED_COMMENTS: Comment[] = [
 // ==========================================
 export default function Article() {
   return (
-    <main className="min-h-screen bg-paper text-ink grain">
+    <main className="min-h-dvh bg-paper text-ink grain">
       {/* Top bar */}
       <header className="border-b border-faint">
         <div className="max-w-[1400px] mx-auto px-6 md:px-10 py-5 flex items-center justify-between">

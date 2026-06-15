@@ -211,9 +211,9 @@ function DayNightImg({ base, alt, isNight, className = "" }: { base: string; alt
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
       <img src={`/images/${base}-day.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" decoding="async" />
       <img src={`/images/${base}-night.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" decoding="async" />
     </div>
   );
 }
@@ -224,17 +224,17 @@ function ArchImg({ base, alt, isNight, coverUrl }: { base: string; alt: string; 
     return (
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         <img src={coverUrl} alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "brightness-[0.55]" : "brightness-100"}`} loading="lazy" />
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "brightness-[0.55]" : "brightness-100"}`} loading="lazy" decoding="async" />
       </div>
     );
   }
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
       <img src={`/images/${base}.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" decoding="async" />
       <img src={`/images/${base}-night.jpg`} alt={alt}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" decoding="async" />
     </div>
   );
 }
@@ -424,7 +424,7 @@ export default function Index() {
   const heroOverlayOpacity = useSpring(heroOverlayRaw, PARALLAX_SPRING);
 
   return (
-    <main className="bg-paper text-ink min-h-screen">
+    <main className="bg-paper text-ink min-h-dvh">
       {/* Intro */}
       <div className={`fixed inset-0 z-[9000] bg-paper flex flex-col items-center justify-center gap-5 transition-opacity duration-700 ${intro ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         <p className="text-[11px] tracking-[0.4em] text-ink-light animate-fade-up">TRACK : 052</p>
@@ -453,7 +453,7 @@ export default function Index() {
       </nav>
 
       {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
-      <section ref={heroRef} id="hero" onMouseMove={handleMouseMove} className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
+      <section ref={heroRef} id="hero" onMouseMove={handleMouseMove} className="relative min-h-[100svh] md:min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
         {/* 자연 배경 (낮/밤) — 패럴랙스 (스프링 보간) */}
         <motion.div
          className="absolute inset-0 will-change-transform scale-110" // scale-110을 추가해 이미지가 잘리지 않게 여유를 줍니다
@@ -461,9 +461,13 @@ export default function Index() {
         >
           <img src="/images/hero-nature-day.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-day.jpg"; }}
+            fetchPriority="high"
+            decoding="async"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-0" : "opacity-100"}`} />
           <img src="/images/hero-nature-night.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-night.jpg"; }}
+            decoding="async"
+            loading="lazy"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-100" : "opacity-0"}`} />
         </motion.div>
         <motion.div

@@ -65,7 +65,7 @@ export default function ArchiveDetail() {
   }, [id]);
 
   return (
-    <main className="min-h-screen bg-paper text-ink grain">
+    <main className="min-h-dvh bg-paper text-ink grain">
       <header className="border-b border-faint sticky top-0 bg-paper/90 backdrop-blur-md z-30">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 py-4 flex items-center justify-between">
           <Link
