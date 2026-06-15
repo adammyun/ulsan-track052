@@ -211,9 +211,9 @@ function DayNightImg({ base, alt, isNight, className = "" }: { base: string; alt
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
       <img src={`/images/${base}-day.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" decoding="async" />
       <img src={`/images/${base}-night.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" decoding="async" />
     </div>
   );
 }
@@ -224,17 +224,17 @@ function ArchImg({ base, alt, isNight, coverUrl }: { base: string; alt: string; 
     return (
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         <img src={coverUrl} alt={alt}
-          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "brightness-[0.55]" : "brightness-100"}`} loading="lazy" />
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "brightness-[0.55]" : "brightness-100"}`} loading="lazy" decoding="async" />
       </div>
     );
   }
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
       <img src={`/images/${base}.jpg`} alt={alt}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-0" : "opacity-100"}`} loading="lazy" decoding="async" />
       <img src={`/images/${base}-night.jpg`} alt={alt}
         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" />
+        className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${isNight ? "opacity-100" : "opacity-0"}`} loading="lazy" decoding="async" />
     </div>
   );
 }
@@ -424,7 +424,7 @@ export default function Index() {
   const heroOverlayOpacity = useSpring(heroOverlayRaw, PARALLAX_SPRING);
 
   return (
-    <main className="bg-paper text-ink min-h-screen">
+    <main className="bg-paper text-ink min-h-dvh">
       {/* Intro */}
       <div className={`fixed inset-0 z-[9000] bg-paper flex flex-col items-center justify-center gap-5 transition-opacity duration-700 ${intro ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         <p className="text-[11px] tracking-[0.4em] text-ink-light animate-fade-up">TRACK : 052</p>
