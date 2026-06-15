@@ -453,7 +453,7 @@ export default function Index() {
       </nav>
 
       {/* Hero — 자연 친화 배경 + 낮/밤 크로스페이드 + 별 효과 */}
-      <section ref={heroRef} id="hero" onMouseMove={handleMouseMove} className="relative min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
+      <section ref={heroRef} id="hero" onMouseMove={handleMouseMove} className="relative min-h-[100svh] md:min-h-screen grain flex flex-col items-center justify-center px-6 text-center overflow-hidden bg-black">
         {/* 자연 배경 (낮/밤) — 패럴랙스 (스프링 보간) */}
         <motion.div
          className="absolute inset-0 will-change-transform scale-110" // scale-110을 추가해 이미지가 잘리지 않게 여유를 줍니다
@@ -461,9 +461,13 @@ export default function Index() {
         >
           <img src="/images/hero-nature-day.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-day.jpg"; }}
+            fetchPriority="high"
+            decoding="async"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-0" : "opacity-100"}`} />
           <img src="/images/hero-nature-night.jpg" alt=""
             onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/pick-taehwa-night.jpg"; }}
+            decoding="async"
+            loading="lazy"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ${isNight ? "opacity-100" : "opacity-0"}`} />
         </motion.div>
         <motion.div
