@@ -1,0 +1,1 @@
+REVOKE SELECT (password_hash) ON public.around_view_comments FROM anon, authenticated;
